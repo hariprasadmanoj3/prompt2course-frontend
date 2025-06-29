@@ -23,7 +23,7 @@ const HomePage = () => {
   // API Configuration
   const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://prompt2course-backend-1.onrender.com';
 
-  // API function to create course
+  // API function to create course using fetch
   const createCourse = async (courseData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/courses/`, {
@@ -56,7 +56,7 @@ const HomePage = () => {
     }
 
     setIsGenerating(true);
-    console.log(`[2025-06-29 07:18:41] hariprasadmanoj3 creating course: "${prompt}"`);
+    console.log(`[2025-06-29 07:51:04] hariprasadmanoj3 creating course: "${prompt}"`);
     toast.loading('🤖 AI is creating your course...', { id: 'generating' });
 
     try {
@@ -66,7 +66,7 @@ const HomePage = () => {
       });
       
       toast.success('✅ Course created successfully!', { id: 'generating' });
-      console.log(`[2025-06-29 07:18:41] Course created with ID: ${course.id}`);
+      console.log(`[2025-06-29 07:51:04] Course created with ID: ${course.id}`);
       
       setPrompt('');
       navigate('/courses');
