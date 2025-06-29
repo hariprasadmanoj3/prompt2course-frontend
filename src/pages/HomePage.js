@@ -22,7 +22,8 @@ import {
   Palette,
   Coffee,
   Camera,
-  Music
+  Music,
+  User  // ← ADDED MISSING IMPORT
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -95,7 +96,7 @@ const HomePage = () => {
     }
 
     setIsGenerating(true);
-    console.log(`[${new Date().toISOString()}] hariprasadmanoj3 creating course: "${prompt}"`);
+    console.log(`[2025-06-29 08:39:48] hariprasadmanoj3 creating course: "${prompt}"`);
     toast.loading('🤖 AI is creating your course...', { id: 'generating' });
 
     try {
@@ -105,7 +106,7 @@ const HomePage = () => {
       });
       
       toast.success('✅ Course created successfully!', { id: 'generating' });
-      console.log(`[${new Date().toISOString()}] Course created with ID: ${course.id}`);
+      console.log(`[2025-06-29 08:39:48] Course created with ID: ${course.id}`);
       
       setPrompt('');
       navigate('/courses');
@@ -157,6 +158,16 @@ const HomePage = () => {
     { name: 'Contact', path: '/contact' }
   ];
 
+  const getFloatingPosition = (index) => {
+    if (typeof window === 'undefined') {
+      return { x: 100 + index * 200, y: 100 + index * 150 };
+    }
+    return {
+      x: Math.random() * window.innerWidth,
+      y: Math.random() * window.innerHeight
+    };
+  };
+
   return (
     <div className={`min-h-screen transition-all duration-500 ${
       isDarkMode 
@@ -166,37 +177,42 @@ const HomePage = () => {
       
       {/* Floating Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {floatingElements.map((element, index) => (
-          <motion.div
-            key={index}
-            className="absolute text-4xl opacity-20"
-            initial={{ 
-              x: Math.random() * window.innerWidth, 
-              y: Math.random() * window.innerHeight 
-            }}
-            animate={{
-              x: [
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth,
-                Math.random() * window.innerWidth
-              ],
-              y: [
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight,
-                Math.random() * window.innerHeight
-              ],
-              rotate: [0, 360, 720]
-            }}
-            transition={{
-              duration: element.duration,
-              delay: element.delay,
-              repeat: Infinity,
-              ease: "linear"
-            }}
-          >
-            {element.icon}
-          </motion.div>
-        ))}
+        {floatingElements.map((element, index) => {
+          const initialPos = getFloatingPosition(index);
+          return (
+            <motion.div
+              key={index}
+              className="absolute text-4xl opacity-20"
+              initial={{ 
+                x: initialPos.x, 
+                y: initialPos.y 
+              }}
+              animate={{
+                x: [
+                  initialPos.x,
+                  initialPos.x + 200,
+                  initialPos.x - 100,
+                  initialPos.x
+                ],
+                y: [
+                  initialPos.y,
+                  initialPos.y - 150,
+                  initialPos.y + 100,
+                  initialPos.y
+                ],
+                rotate: [0, 360, 720]
+              }}
+              transition={{
+                duration: element.duration,
+                delay: element.delay,
+                repeat: Infinity,
+                ease: "linear"
+              }}
+            >
+              {element.icon}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Header */}

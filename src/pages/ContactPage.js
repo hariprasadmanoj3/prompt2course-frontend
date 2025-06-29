@@ -538,7 +538,7 @@ const ContactPage = () => {
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <div className="text-2xl font-bold">< 1h</div>
+                  <div className="text-2xl font-bold">{'< 1h'}</div>
                   <div className="text-xs opacity-90">Response Time</div>
                 </div>
                 <div>
