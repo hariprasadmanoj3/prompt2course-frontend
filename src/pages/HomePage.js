@@ -24,11 +24,9 @@ import {
   Lightbulb,
   Rocket,
   Heart,
-  CheckCircle,
-  ArrowDown
+  CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import apiService from '../services/api';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -36,7 +34,7 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [stats, setStats] = useState({ totalCourses: 0, totalLearners: '10k+', avgRating: 4.8 });
+  const [stats] = useState({ totalCourses: 25, totalLearners: '10k+', avgRating: 4.8 });
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -44,20 +42,7 @@ const HomePage = () => {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-    loadStats();
   }, []);
-
-  const loadStats = async () => {
-    try {
-      const response = await apiService.request('/api/courses/stats/');
-      setStats(prev => ({
-        ...prev,
-        totalCourses: response.total_courses || 0
-      }));
-    } catch (error) {
-      console.log('Stats loading failed, using defaults');
-    }
-  };
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -81,15 +66,27 @@ const HomePage = () => {
     setIsLoading(true);
     
     try {
-      const courseData = {
-        topic: prompt.trim(),
-        created_by: 'anonymous'
-      };
+      // Simple API call to backend
+      const API_BASE = process.env.REACT_APP_API_URL || 'https://prompt2course-backend-1.onrender.com';
       
-      await apiService.createCourse(courseData);
-      toast.success('🎉 Course generated successfully!');
-      setPrompt('');
-      navigate('/courses');
+      const response = await fetch(`${API_BASE}/api/courses/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: prompt.trim(),
+          created_by: 'anonymous'
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('🎉 Course generated successfully!');
+        setPrompt('');
+        navigate('/courses');
+      } else {
+        throw new Error('Failed to create course');
+      }
     } catch (error) {
       console.error('Course creation failed:', error);
       toast.error('Failed to generate course. Please try again.');
@@ -637,7 +634,7 @@ const HomePage = () => {
           ))}
         </motion.div>
 
-        {/* NEW: How It Works Section */}
+        {/* How It Works Section */}
         <motion.div 
           className="mb-24"
           initial={{ opacity: 0, y: 30 }}
@@ -690,7 +687,7 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* NEW: Why Choose Us Section */}
+        {/* Why Choose Us Section */}
         <motion.div 
           className="mb-24"
           initial={{ opacity: 0, y: 30 }}
