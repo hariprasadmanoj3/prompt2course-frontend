@@ -34,7 +34,12 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [stats] = useState({ totalCourses: 25, totalLearners: '10k+', avgRating: 4.8 });
+  const [stats, setStats] = useState({ 
+    totalCourses: 0, 
+    totalLearners: 1, // Just the current user
+    avgRating: 'New',
+    loading: true 
+  });
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -42,7 +47,37 @@ const HomePage = () => {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
+    loadRealStats();
   }, []);
+
+  const loadRealStats = async () => {
+    try {
+      const API_BASE = 'https://prompt2course-backend-1.onrender.com';
+      
+      // Get REAL course count from backend
+      const response = await fetch(`${API_BASE}/api/courses/`);
+      const coursesData = await response.json();
+      
+      // Calculate REAL stats only
+      const realStats = {
+        totalCourses: coursesData.length || 0,
+        totalLearners: 1, // Only current user (truthful)
+        avgRating: coursesData.length > 0 ? 'Beta' : 'New',
+        loading: false
+      };
+      
+      setStats(realStats);
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      // Even on error, show truthful data
+      setStats({
+        totalCourses: 0,
+        totalLearners: 1,
+        avgRating: 'New',
+        loading: false
+      });
+    }
+  };
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -66,43 +101,46 @@ const HomePage = () => {
     setIsLoading(true);
     
     try {
-      // Simple API call to backend
-      const API_BASE = process.env.REACT_APP_API_URL || 'https://prompt2course-backend-1.onrender.com';
+      const API_BASE = 'https://prompt2course-backend-1.onrender.com';
       
+      // Create course with user's exact topic
       const response = await fetch(`${API_BASE}/api/courses/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          title: `Complete Guide to ${prompt.trim()}`,
+          description: `Master ${prompt.trim()} with this comprehensive AI-generated course covering all essential concepts and practical applications.`,
           topic: prompt.trim(),
-          created_by: 'anonymous'
+          created_by: 'hariprasadmanoj3' // Real current user
         }),
       });
 
       if (response.ok) {
-        toast.success('🎉 Course generated successfully!');
+        const newCourse = await response.json();
+        toast.success(`🎉 "${newCourse.title}" course created successfully!`);
         setPrompt('');
+        
+        // Update stats with real new count
+        setStats(prev => ({
+          ...prev,
+          totalCourses: prev.totalCourses + 1,
+          avgRating: 'Beta' // Now has content
+        }));
+        
         navigate('/courses');
       } else {
-        throw new Error('Failed to create course');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create course');
       }
     } catch (error) {
       console.error('Course creation failed:', error);
-      toast.error('Failed to generate course. Please try again.');
+      toast.error(`Failed to create course: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const suggestions = [
-    { emoji: '🐍', text: 'Python for Beginners', color: 'from-green-500 to-blue-500', popularity: '95%' },
-    { emoji: '⚛️', text: 'React.js Fundamentals', color: 'from-blue-500 to-cyan-500', popularity: '92%' }, 
-    { emoji: '🤖', text: 'Machine Learning Basics', color: 'from-purple-500 to-pink-500', popularity: '89%' },
-    { emoji: '📱', text: 'Mobile App Development', color: 'from-orange-500 to-red-500', popularity: '87%' },
-    { emoji: '🎨', text: 'UI/UX Design Principles', color: 'from-pink-500 to-rose-500', popularity: '85%' },
-    { emoji: '☁️', text: 'Cloud Computing', color: 'from-indigo-500 to-purple-500', popularity: '83%' }
-  ];
 
   const features = [
     { 
@@ -115,23 +153,23 @@ const HomePage = () => {
     { 
       icon: <Globe className="w-8 h-8" />, 
       title: 'Any Topic', 
-      desc: 'Learn anything you want - from coding to cooking to creativity',
+      desc: 'Learn anything you want - no limitations on subject matter',
       color: 'from-blue-500 to-indigo-600',
       stat: '∞ Topics'
     },
     { 
       icon: <Users className="w-8 h-8" />, 
       title: 'User-Friendly', 
-      desc: 'Simple and intuitive interface designed for learners of all levels',
+      desc: 'Simple and intuitive interface designed for easy learning',
       color: 'from-green-500 to-emerald-600',
-      stat: '99% Easy'
+      stat: 'Easy to Use'
     },
     { 
       icon: <Award className="w-8 h-8" />, 
       title: 'High Quality', 
-      desc: 'Comprehensive content with structured modules and clear objectives',
+      desc: 'Comprehensive content with structured modules and objectives',
       color: 'from-purple-500 to-violet-600',
-      stat: '4.9★ Rated'
+      stat: 'AI-Powered'
     }
   ];
 
@@ -139,82 +177,67 @@ const HomePage = () => {
     {
       icon: <Brain className="w-6 h-6" />,
       title: 'AI-Powered Learning',
-      desc: 'Advanced algorithms create personalized curriculum',
-      benefit: 'Save 10+ hours of research'
+      desc: 'Advanced algorithms create personalized curriculum for any topic',
+      benefit: 'Learn anything you want'
     },
     {
       icon: <Target className="w-6 h-6" />,
-      title: 'Goal-Oriented Structure',
-      desc: 'Clear learning paths with measurable outcomes',
-      benefit: 'Achieve goals 3x faster'
+      title: 'No Limitations',
+      desc: 'Create courses on absolutely any subject matter',
+      benefit: 'Unlimited learning possibilities'
     },
     {
       icon: <Shield className="w-6 h-6" />,
-      title: 'Quality Assured',
-      desc: 'Expert-reviewed content and best practices',
-      benefit: '95% learner satisfaction'
+      title: 'Free to Use',
+      desc: 'Generate and access courses completely free',
+      benefit: '100% Free platform'
     },
     {
       icon: <TrendingUp className="w-6 h-6" />,
-      title: 'Skill Enhancement',
-      desc: 'Boost your career with in-demand skills',
-      benefit: 'Increase earning potential'
+      title: 'Instant Access',
+      desc: 'Start learning immediately after course generation',
+      benefit: 'No waiting time'
     }
   ];
 
   const processSteps = [
     {
       step: '01',
-      title: 'Describe Your Goal',
-      desc: 'Tell us what you want to learn in simple words',
+      title: 'Describe Your Topic',
+      desc: 'Type anything you want to learn - from quantum physics to cooking',
       icon: <Lightbulb className="w-8 h-8" />,
       color: 'from-blue-500 to-cyan-500'
     },
     {
       step: '02',
       title: 'AI Generates Course',
-      desc: 'Our AI creates a comprehensive learning plan',
+      desc: 'Our AI creates comprehensive learning materials instantly',
       icon: <Brain className="w-8 h-8" />,
       color: 'from-purple-500 to-pink-500'
     },
     {
       step: '03',
       title: 'Start Learning',
-      desc: 'Access your personalized course immediately',
+      desc: 'Access videos, modules, and quizzes immediately',
       icon: <Rocket className="w-8 h-8" />,
       color: 'from-green-500 to-emerald-500'
     }
   ];
 
-  const testimonials = [
-    { 
-      name: 'Sarah Chen', 
-      role: 'Software Developer', 
-      text: 'Prompt2Course helped me learn React in just one weekend. The AI-generated content was incredibly comprehensive and well-structured!',
-      avatar: '👩‍💻',
-      rating: 5,
-      course: 'React.js Fundamentals'
-    },
-    { 
-      name: 'Miguel Rodriguez', 
-      role: 'Marketing Manager', 
-      text: 'I needed to understand data analytics quickly for my job. This platform created the perfect course tailored to my specific needs.',
-      avatar: '👨‍💼',
-      rating: 5,
-      course: 'Data Analytics for Marketing'
-    },
-    { 
-      name: 'Priya Patel', 
-      role: 'Design Student', 
-      text: 'The UI/UX design course was exactly what I needed. Clear explanations, practical examples, and beautifully structured modules.',
-      avatar: '👩‍🎨',
-      rating: 5,
-      course: 'UI/UX Design Principles'
-    }
+  // Real examples based on what users might actually want to learn
+  const realExamples = [
+    'JavaScript Programming',
+    'Digital Photography',
+    'Guitar Playing Basics',
+    'Spanish Language',
+    'Machine Learning',
+    'Cooking Fundamentals',
+    'Investment Strategies',
+    'Yoga for Beginners'
   ];
 
-  // Enhanced floating background elements
-  const floatingElements = Array.from({ length: 15 }, (_, i) => (
+  // Floating background elements
+  const floatingElements = Array.from({ length: 12 }, (_, i) => (
     <motion.div
       key={i}
       className={`absolute rounded-full opacity-20 ${
@@ -224,8 +247,8 @@ const HomePage = () => {
         'bg-gradient-to-r from-yellow-400 to-orange-600'
       }`}
       style={{
-        width: `${30 + Math.random() * 100}px`,
-        height: `${30 + Math.random() * 100}px`,
+        width: `${30 + Math.random() * 80}px`,
+        height: `${30 + Math.random() * 80}px`,
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
       }}
@@ -415,7 +438,7 @@ const HomePage = () => {
       {/* Main Content */}
       <main className="relative z-10 container mx-auto px-4">
         
-        {/* Enhanced Stats Bar */}
+        {/* REAL Stats Bar */}
         <motion.div 
           className="flex justify-center py-12"
           initial={{ opacity: 0, y: 20 }}
@@ -427,8 +450,14 @@ const HomePage = () => {
               className="text-center"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{stats.totalCourses}+</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Courses</div>
+              {stats.loading ? (
+                <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">...</div>
+              ) : (
+                <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{stats.totalCourses}</div>
+              )}
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {stats.totalCourses === 1 ? 'Course Generated' : 'Courses Generated'}
+              </div>
             </motion.div>
             <div className="w-px h-8 bg-gray-300 dark:bg-gray-600" />
             <motion.div 
@@ -436,16 +465,17 @@ const HomePage = () => {
               whileHover={{ scale: 1.05 }}
             >
               <div className="text-3xl font-bold text-gray-800 dark:text-gray-200">{stats.totalLearners}</div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Learners</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {stats.totalLearners === 1 ? 'User (You)' : 'Users'}
+              </div>
             </motion.div>
             <div className="w-px h-8 bg-gray-300 dark:bg-gray-600" />
             <motion.div 
               className="text-center flex items-center"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 mr-1">{stats.avgRating}</div>
-              <Star className="w-6 h-6 text-yellow-500 fill-current" />
-              <div className="text-sm text-gray-600 dark:text-gray-400 ml-2">Rating</div>
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-200">{stats.avgRating}</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400 ml-2">Platform</div>
             </motion.div>
           </div>
         </motion.div>
@@ -484,24 +514,24 @@ const HomePage = () => {
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto mb-8 leading-relaxed">
-            Transform any topic into a <span className="font-semibold text-blue-600 dark:text-blue-400">comprehensive learning course</span> with AI. 
-            Just describe what you want to learn, and we'll create a <span className="font-semibold text-purple-600 dark:text-purple-400">personalized curriculum</span> for you.
+            Transform <span className="font-semibold text-blue-600 dark:text-blue-400">any topic</span> into a comprehensive learning course with AI. 
+            No limits - create courses on <span className="font-semibold text-purple-600 dark:text-purple-400">absolutely anything</span> you want to learn.
           </p>
 
-          {/* Enhanced Scroll indicator */}
-          <motion.div
-            className="flex justify-center mt-12"
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <div className="flex flex-col items-center space-y-2">
-              <ChevronDown className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">Scroll to explore</span>
-            </div>
-          </motion.div>
+          {/* Real-time course creation indicator */}
+          {stats.totalCourses > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="inline-flex items-center space-x-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-4 py-2 rounded-full text-sm font-medium"
+            >
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <span>{stats.totalCourses} {stats.totalCourses === 1 ? 'course' : 'courses'} generated so far!</span>
+            </motion.div>
+          )}
         </motion.div>
 
-        {/* Enhanced Course Generation Form */}
+        {/* Course Generation Form - Enhanced for unlimited topics */}
         <motion.div 
           className="max-w-5xl mx-auto mb-24"
           initial={{ opacity: 0, y: 30 }}
@@ -512,14 +542,14 @@ const HomePage = () => {
             <form onSubmit={handleSubmit} className="space-y-8">
               <div>
                 <label className="block text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4 text-center">
-                  🎯 What do you want to master today?
+                  🎯 What do you want to learn today?
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="e.g., Advanced Python machine learning, Digital marketing for startups, Spanish conversation skills..."
+                    placeholder="Type ANYTHING: Quantum Physics, Bread Baking, Machine Learning, Guitar Playing, Business Strategy..."
                     className="w-full px-8 py-6 text-xl rounded-3xl border-3 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-300 shadow-lg"
                     disabled={isLoading}
                   />
@@ -565,37 +595,35 @@ const HomePage = () => {
               </motion.button>
             </form>
 
-            {/* Enhanced Trending Suggestions */}
+            {/* Real examples section */}
             <div className="mt-10">
               <p className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-6 text-center">
-                🔥 Trending learning topics:
+                ✨ No limits! Create courses on absolutely any topic
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {suggestions.map((suggestion, index) => (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                {realExamples.map((example, index) => (
                   <motion.button
-                    key={suggestion.text}
-                    onClick={() => setPrompt(suggestion.text)}
-                    className={`p-4 bg-gradient-to-r ${suggestion.color} text-white rounded-2xl font-medium transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden`}
+                    key={example}
+                    onClick={() => setPrompt(example)}
+                    className="p-3 bg-white/60 dark:bg-gray-700/60 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl text-sm text-gray-700 dark:text-gray-300 transition-all duration-200 hover:scale-105"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 + index * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
+                    transition={{ delay: 0.6 + index * 0.05 }}
                   >
-                    <div className="absolute top-2 right-2 text-xs bg-white/20 px-2 py-1 rounded-full">
-                      {suggestion.popularity}
-                    </div>
-                    <div className="text-2xl mb-2">{suggestion.emoji}</div>
-                    <div>{suggestion.text}</div>
-                    <div className="text-xs mt-1 opacity-75">Popular choice</div>
+                    {example}
                   </motion.button>
                 ))}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                Or type anything else - cooking, sports, science, arts, business, technology...
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Enhanced Features Grid with Stats */}
+        {/* Features Grid */}
         <motion.div 
           className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-24"
           initial={{ opacity: 0, y: 30 }}
@@ -611,7 +639,6 @@ const HomePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 + index * 0.1 }}
             >
-              {/* Background Gradient */}
               <div className={`absolute inset-0 bg-gradient-to-r ${feature.color} opacity-5 rounded-3xl`} />
               
               <motion.div 
@@ -627,7 +654,7 @@ const HomePage = () => {
               <p className="text-gray-600 dark:text-gray-400 leading-relaxed mb-4 relative z-10">
                 {feature.desc}
               </p>
-              <div className={`text-2xl font-bold bg-gradient-to-r ${feature.color} bg-clip-text text-transparent relative z-10`}>
+              <div className={`text-xl font-bold bg-gradient-to-r ${feature.color} bg-clip-text text-transparent relative z-10`}>
                 {feature.stat}
               </div>
             </motion.div>
@@ -734,74 +761,12 @@ const HomePage = () => {
           </div>
         </motion.div>
 
-        {/* Enhanced Testimonials Section */}
-        <motion.div 
-          className="mb-24"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 0.8 }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Success Stories 💬
-          </h2>
-          <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-16 max-w-3xl mx-auto">
-            See how Prompt2Course has transformed learning for thousands of students
-          </p>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                className="p-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-3xl border border-white/30 dark:border-gray-700/30 shadow-xl relative overflow-hidden"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 2.2 + index * 0.2 }}
-                whileHover={{ scale: 1.02, y: -5 }}
-              >
-                {/* Background Pattern */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full -mr-10 -mt-10" />
-                
-                <div className="flex items-center mb-6">
-                  <div className="text-4xl mr-4">{testimonial.avatar}</div>
-                  <div>
-                    <h4 className="font-bold text-lg text-gray-800 dark:text-gray-200">{testimonial.name}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">{testimonial.role}</p>
-                  </div>
-                </div>
-                
-                <div className="flex mb-4">
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 2.4 + index * 0.2 + i * 0.1 }}
-                    >
-                      <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                    </motion.div>
-                  ))}
-                </div>
-                
-                <p className="text-gray-700 dark:text-gray-300 italic mb-4 leading-relaxed">
-                  "{testimonial.text}"
-                </p>
-                
-                <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-3">
-                  <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                    Course: {testimonial.course}
-                  </span>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
         {/* Enhanced CTA Section */}
         <motion.div 
           className="text-center bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-3xl p-16 text-white shadow-2xl relative overflow-hidden mb-16"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 2.4, duration: 0.8 }}
+          transition={{ delay: 2, duration: 0.8 }}
         >
           {/* Background Pattern */}
           <div className="absolute inset-0 opacity-10">
@@ -819,11 +784,10 @@ const HomePage = () => {
               🎓
             </motion.div>
             <h2 className="text-4xl md:text-6xl font-bold mb-6">
-              Ready to Transform Your Learning?
+              Ready to Learn Anything?
             </h2>
             <p className="text-xl md:text-2xl mb-10 opacity-90 max-w-3xl mx-auto leading-relaxed">
-              Join <span className="font-bold">thousands of learners</span> who are accelerating their growth with AI-powered courses. 
-              Start your journey today!
+              Start your unlimited learning journey today. Create courses on any topic you can imagine - completely free!
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <motion.button
@@ -833,7 +797,7 @@ const HomePage = () => {
                 whileTap={{ scale: 0.95 }}
               >
                 <BookOpen className="w-6 h-6" />
-                <span>Explore Courses</span>
+                <span>View My Courses</span>
               </motion.button>
               <motion.button
                 onClick={() => document.querySelector('input')?.focus()}
@@ -848,24 +812,24 @@ const HomePage = () => {
             
             {/* Trust Indicators */}
             <motion.div 
-              className="mt-12 flex justify-center items-center space-x-8 opacity-75"
+              className="mt-12 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-8 opacity-75"
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.75 }}
-              transition={{ delay: 3 }}
+              transition={{ delay: 2.5 }}
             >
               <div className="flex items-center space-x-2">
                 <Heart className="w-5 h-5 text-red-400" />
-                <span className="text-sm">Loved by 10k+ learners</span>
+                <span className="text-sm">Built by {stats.totalLearners === 1 ? 'you' : 'learners'} like you</span>
               </div>
-              <div className="w-px h-6 bg-white/30" />
+              <div className="hidden sm:block w-px h-6 bg-white/30" />
               <div className="flex items-center space-x-2">
                 <Shield className="w-5 h-5 text-green-400" />
-                <span className="text-sm">100% Free to start</span>
+                <span className="text-sm">100% Free to use</span>
               </div>
-              <div className="w-px h-6 bg-white/30" />
+              <div className="hidden sm:block w-px h-6 bg-white/30" />
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-blue-400" />
-                <span className="text-sm">Available 24/7</span>
+                <span className="text-sm">Available anytime</span>
               </div>
             </motion.div>
           </div>
