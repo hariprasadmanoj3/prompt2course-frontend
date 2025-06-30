@@ -403,12 +403,13 @@ const CoursePage = () => {
                   
                   <div className="flex items-center space-x-2">
                     <motion.button
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/courses/${course.id}`)}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 flex items-center justify-center space-x-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>View Course</span>
+                    <Eye className="w-4 h-4" />
+                    <span>View Course</span>
                     </motion.button>
                     
                     <motion.button
