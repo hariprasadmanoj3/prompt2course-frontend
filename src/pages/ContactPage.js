@@ -1,26 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Send,
-  Github,
-  Linkedin,
-  Twitter,
-  MessageCircle,
-  Moon,
+  BookOpen, 
+  Moon, 
   Sun,
+  Mail,
+  Github,
+  Send,
+  MessageCircle,
   Clock,
-  CheckCircle,
-  Star,
   Globe,
+  CheckCircle,
+  User,
+  MessageSquare,
+  AlertCircle,
   Heart,
-  Zap,
-  Shield,
-  Users
+  Coffee,
+  Lightbulb
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -32,7 +30,7 @@ const ContactPage = () => {
     email: '',
     subject: '',
     message: '',
-    priority: 'normal'
+    type: 'general'
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,11 +78,11 @@ const ContactPage = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate form submission with realistic delay
+      // Simulate form submission (replace with real API call if needed)
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      toast.success('🎉 Message sent successfully! We\'ll get back to you within 24 hours.');
-      setFormData({ name: '', email: '', subject: '', message: '', priority: 'normal' });
+      toast.success('🎉 Message sent successfully! I\'ll get back to you soon.');
+      setFormData({ name: '', email: '', subject: '', message: '', type: 'general' });
     } catch (error) {
       toast.error('Failed to send message. Please try again.');
     } finally {
@@ -92,174 +90,128 @@ const ContactPage = () => {
     }
   };
 
-  const contactInfo = [
+  const contactMethods = [
     {
-      icon: <Mail className="w-8 h-8" />,
+      icon: <Mail className="w-6 h-6" />,
       title: 'Email',
       value: 'hariprasadmanoj3@gmail.com',
       link: 'mailto:hariprasadmanoj3@gmail.com',
       color: 'from-blue-500 to-cyan-500',
-      description: 'Send us an email anytime'
+      description: 'Best way to reach me directly'
     },
     {
-      icon: <Github className="w-8 h-8" />,
+      icon: <Github className="w-6 h-6" />,
       title: 'GitHub',
       value: 'hariprasadmanoj3',
       link: 'https://github.com/hariprasadmanoj3',
       color: 'from-gray-600 to-gray-800',
-      description: 'Check out our projects'
+      description: 'Check out the project code'
     },
     {
-      icon: <Globe className="w-8 h-8" />,
+      icon: <Globe className="w-6 h-6" />,
       title: 'Location',
       value: 'India 🇮🇳',
       link: null,
       color: 'from-green-500 to-emerald-500',
-      description: 'Based in India, serving globally'
+      description: 'Based in India'
     },
     {
-      icon: <Clock className="w-8 h-8" />,
+      icon: <Clock className="w-6 h-6" />,
       title: 'Response Time',
       value: '< 24 hours',
       link: null,
       color: 'from-purple-500 to-pink-500',
-      description: 'Quick response guaranteed'
+      description: 'Usually respond quickly'
     }
   ];
 
-  const socialLinks = [
-    { 
-      icon: <Github className="w-6 h-6" />, 
-      name: 'GitHub', 
-      url: 'https://github.com/hariprasadmanoj3',
-      color: 'hover:bg-gray-100 dark:hover:bg-gray-700'
-    },
-    { 
-      icon: <Linkedin className="w-6 h-6" />, 
-      name: 'LinkedIn', 
-      url: '#',
-      color: 'hover:bg-blue-100 dark:hover:bg-blue-900'
-    },
-    { 
-      icon: <Twitter className="w-6 h-6" />, 
-      name: 'Twitter', 
-      url: '#',
-      color: 'hover:bg-blue-100 dark:hover:bg-blue-900'
-    },
-    { 
-      icon: <Mail className="w-6 h-6" />, 
-      name: 'Email', 
-      url: 'mailto:hariprasadmanoj3@gmail.com',
-      color: 'hover:bg-red-100 dark:hover:bg-red-900'
-    }
+  const messageTypes = [
+    { id: 'general', label: 'General Question', emoji: '💬' },
+    { id: 'bug', label: 'Bug Report', emoji: '🐛' },
+    { id: 'feature', label: 'Feature Request', emoji: '💡' },
+    { id: 'feedback', label: 'Feedback', emoji: '📝' },
+    { id: 'collaboration', label: 'Collaboration', emoji: '🤝' }
   ];
 
   const quickTopics = [
-    { emoji: '🐛', text: 'Bug Report', subject: 'Bug Report: ' },
-    { emoji: '💡', text: 'Feature Request', subject: 'Feature Request: ' },
-    { emoji: '❓', text: 'General Question', subject: 'Question: ' },
-    { emoji: '🤝', text: 'Partnership', subject: 'Partnership Inquiry: ' },
-    { emoji: '📚', text: 'Course Feedback', subject: 'Course Feedback: ' },
-    { emoji: '💼', text: 'Business Inquiry', subject: 'Business Inquiry: ' }
+    'How does the AI course generation work?',
+    'Can I suggest new features?',
+    'I found a bug in the system',
+    'How can I contribute to the project?',
+    'Can you add support for my language?',
+    'How do I delete my courses?'
   ];
 
-  const features = [
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: 'Quick Response',
-      desc: 'We respond to all messages within 24 hours'
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: 'Privacy Protected',
-      desc: 'Your information is completely secure with us'
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: 'Community Support',
-      desc: 'Join our growing community of learners'
-    }
-  ];
-
-  // Floating background elements
+  // Simple floating elements (consistent with other pages)
   const floatingElements = Array.from({ length: 6 }, (_, i) => (
     <motion.div
       key={i}
-      className="absolute w-20 h-20 bg-gradient-to-r from-blue-400/10 to-purple-400/10 rounded-full blur-xl"
+      className="absolute text-3xl opacity-20"
       style={{
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
+        left: `${10 + Math.random() * 80}%`,
+        top: `${10 + Math.random() * 80}%`,
       }}
       animate={{
-        y: [0, -30, 0],
-        x: [0, 15, 0],
-        scale: [1, 1.2, 1],
+        y: [0, -15, 0],
+        rotate: [0, 10, -10, 0],
       }}
       transition={{
-        duration: 6 + Math.random() * 4,
+        duration: 4 + Math.random() * 2,
         repeat: Infinity,
         ease: "easeInOut",
       }}
-    />
+    >
+      {['📧', '💬', '🤝', '✨', '💡', '🌟'][i]}
+    </motion.div>
   ));
 
   return (
-    <div className={`min-h-screen transition-all duration-700 ${
+    <div className={`min-h-screen relative transition-all duration-500 ${
       isDarkMode 
         ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900' 
         : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-    } font-sora relative overflow-hidden`}>
+    } font-sora`}>
       
-      {/* Floating Background Elements */}
+      {/* Simple Floating Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {floatingElements}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-pink-600/10 to-orange-600/10 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
       
-      {/* Header */}
+      {/* Clean Header */}
       <motion.header 
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="relative z-50 bg-white/10 dark:bg-gray-800/10 backdrop-blur-xl border-b border-white/20 dark:border-gray-700/20"
+        className="relative z-50 bg-white/20 dark:bg-gray-800/20 backdrop-blur-md border-b border-white/20 dark:border-gray-700/20"
       >
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <motion.button
+            <button
               onClick={() => navigate('/')}
-              className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-              <span className="font-medium">Back to Home</span>
-            </motion.button>
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Home</span>
+            </button>
             
             <div className="flex items-center space-x-3">
-              <motion.div
-                className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
-              >
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
                 <MessageCircle className="w-6 h-6 text-white" />
-              </motion.div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Contact Us
+              </div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Get in Touch
               </h1>
             </div>
 
-            <motion.button
+            <button
               onClick={toggleDarkMode}
-              className="p-3 rounded-full bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border border-white/30 dark:border-gray-700/30"
-              whileHover={{ scale: 1.1, rotate: 15 }}
-              whileTap={{ scale: 0.9 }}
+              className="p-2 rounded-xl bg-white/20 dark:bg-gray-800/20 hover:bg-white/30 dark:hover:bg-gray-700/30 transition-colors"
             >
               {isDarkMode ? (
                 <Sun className="w-5 h-5 text-yellow-500" />
               ) : (
                 <Moon className="w-5 h-5 text-blue-600" />
               )}
-            </motion.button>
+            </button>
           </div>
         </div>
       </motion.header>
@@ -269,104 +221,58 @@ const ContactPage = () => {
         
         {/* Hero Section */}
         <motion.div 
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 50 }}
+          className="text-center mb-20"
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <motion.div 
-            className="text-8xl mb-8"
-            animate={{ 
-              rotate: [0, 10, -10, 0],
-              scale: [1, 1.1, 1]
-            }}
-            transition={{ 
-              duration: 3,
-              repeat: Infinity,
-              repeatDelay: 2
-            }}
-          >
-            📞
-          </motion.div>
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+          <div className="text-6xl mb-6">📞</div>
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
             <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Get in Touch
+              Let's Connect
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Have questions, suggestions, or just want to say hello? 
-            We'd love to hear from you! Our team is here to help you succeed.
+            Have questions about Prompt2Course? Want to report a bug or suggest a feature? 
+            I'd love to hear from you!
           </p>
         </motion.div>
 
-        {/* Quick Contact Features */}
-        <motion.div 
-          className="grid md:grid-cols-3 gap-6 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              className="text-center p-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-gray-700/20"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
-              whileHover={{ scale: 1.02, y: -5 }}
-            >
-              <div className="text-blue-600 dark:text-blue-400 mb-3 flex justify-center">
-                {feature.icon}
-              </div>
-              <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {feature.desc}
-              </p>
-            </motion.div>
-          ))}
-        </motion.div>
-
-        <div className="grid lg:grid-cols-2 gap-16">
+        <div className="grid lg:grid-cols-2 gap-12">
           
           {/* Contact Form */}
           <motion.div 
-            className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-2xl rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/30 p-10"
-            initial={{ opacity: 0, x: -50 }}
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/20 p-8"
+            initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center space-x-3 mb-8">
-              <motion.div
-                className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center"
-                whileHover={{ rotate: 360 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Send className="w-6 h-6 text-white" />
-              </motion.div>
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200">Send Message</h2>
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                <Send className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Send a Message</h2>
             </div>
             
-            {/* Quick Topic Buttons */}
-            <div className="mb-8">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">
-                Quick topics:
-              </p>
+            {/* Message Type Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                What's this about?
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {quickTopics.map((topic, index) => (
-                  <motion.button
-                    key={topic.text}
-                    onClick={() => setFormData({...formData, subject: topic.subject})}
-                    className="p-2 text-xs bg-white/60 dark:bg-gray-700/60 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg transition-all duration-200 flex items-center space-x-1"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.8 + index * 0.05 }}
+                {messageTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setFormData({...formData, type: type.id})}
+                    className={`p-2 text-xs rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+                      formData.type === type.id
+                        ? 'bg-blue-100 dark:bg-blue-900 border-2 border-blue-500'
+                        : 'bg-white/60 dark:bg-gray-700/60 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600'
+                    }`}
                   >
-                    <span>{topic.emoji}</span>
-                    <span className="text-gray-700 dark:text-gray-300">{topic.text}</span>
-                  </motion.button>
+                    <span>{type.emoji}</span>
+                    <span className="text-gray-700 dark:text-gray-300">{type.label}</span>
+                  </button>
                 ))}
               </div>
             </div>
@@ -382,8 +288,8 @@ const ContactPage = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-300"
-                    placeholder="Your full name"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
+                    placeholder="Your name"
                     required
                   />
                 </div>
@@ -396,7 +302,7 @@ const ContactPage = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-300"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                     placeholder="your@email.com"
                     required
                   />
@@ -412,26 +318,9 @@ const ContactPage = () => {
                   name="subject"
                   value={formData.subject}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-300"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-colors"
                   placeholder="What's this about?"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Priority
-                </label>
-                <select
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 transition-all duration-300"
-                >
-                  <option value="low">Low Priority</option>
-                  <option value="normal">Normal Priority</option>
-                  <option value="high">High Priority</option>
-                  <option value="urgent">Urgent</option>
-                </select>
               </div>
               
               <div>
@@ -442,27 +331,21 @@ const ContactPage = () => {
                   name="message"
                   value={formData.message}
                   onChange={handleChange}
-                  rows="6"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none transition-all duration-300"
-                  placeholder="Tell us more about your inquiry..."
+                  rows="5"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-none transition-colors"
+                  placeholder="Tell me more..."
                   required
                 />
               </div>
               
-              <motion.button
+              <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-700 hover:via-purple-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                whileHover={{ scale: isSubmitting ? 1 : 1.02, y: isSubmitting ? 0 : -2 }}
-                whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 px-6 rounded-xl font-bold transition-all duration-300 flex items-center justify-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
-                    <motion.div
-                      className="w-6 h-6 border-2 border-white border-t-transparent rounded-full"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Sending Message...</span>
                   </>
                 ) : (
@@ -471,166 +354,145 @@ const ContactPage = () => {
                     <span>Send Message</span>
                   </>
                 )}
-              </motion.button>
+              </button>
             </form>
+
+            {/* Quick Topics */}
+            <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">
+                Quick questions? Try these:
+              </p>
+              <div className="space-y-2">
+                {quickTopics.slice(0, 3).map((topic, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setFormData({...formData, message: topic})}
+                    className="block w-full text-left text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg"
+                  >
+                    • {topic}
+                  </button>
+                ))}
+              </div>
+            </div>
           </motion.div>
 
           {/* Contact Info */}
           <motion.div 
-            className="space-y-8"
-            initial={{ opacity: 0, x: 50 }}
+            className="space-y-6"
+            initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.4 }}
           >
-            {/* Contact Cards */}
-            <div className="space-y-6">
-              {contactInfo.map((info, index) => (
-                <motion.div
-                  key={info.title}
-                  className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-lg"
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + index * 0.1 }}
+            {/* Contact Methods */}
+            <div className="space-y-4">
+              {contactMethods.map((method, index) => (
+                <div
+                  key={method.title}
+                  className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 hover:shadow-lg transition-shadow"
                 >
                   <div className="flex items-start space-x-4">
-                    <motion.div 
-                      className={`p-3 rounded-2xl bg-gradient-to-r ${info.color} text-white shadow-lg`}
-                      whileHover={{ rotate: 360, scale: 1.1 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      {info.icon}
-                    </motion.div>
+                    <div className={`p-3 rounded-xl bg-gradient-to-r ${method.color} text-white`}>
+                      {method.icon}
+                    </div>
                     <div className="flex-1">
-                      <h3 className="font-bold text-gray-800 dark:text-gray-200 text-lg mb-1">
-                        {info.title}
+                      <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-1">
+                        {method.title}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                        {info.description}
+                        {method.description}
                       </p>
-                      {info.link ? (
+                      {method.link ? (
                         <a
-                          href={info.link}
+                          href={method.link}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
                         >
-                          {info.value}
+                          {method.value}
                         </a>
                       ) : (
                         <p className="text-gray-700 dark:text-gray-300 font-medium">
-                          {info.value}
+                          {method.value}
                         </p>
                       )}
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            {/* Social Links */}
-            <motion.div 
-              className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-gray-700/20 shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.4 }}
-            >
-              <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4 text-lg">
-                Connect with Us 🌐
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {socialLinks.map((social, index) => (
-                  <motion.a
-                    key={social.name}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`p-4 bg-white dark:bg-gray-700 ${social.color} text-gray-700 dark:text-gray-300 rounded-xl transition-all duration-300 flex items-center space-x-3 border border-gray-200 dark:border-gray-600`}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1.6 + index * 0.1 }}
-                  >
-                    {social.icon}
-                    <span className="font-medium">{social.name}</span>
-                  </motion.a>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Quick Response Promise */}
-            <motion.div 
-              className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white relative overflow-hidden"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.8 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent transform rotate-12 scale-150" />
-              <div className="relative z-10">
-                <motion.div
-                  className="text-4xl mb-4"
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                >
-                  ⚡
-                </motion.div>
-                <h3 className="font-bold text-2xl mb-3">Quick Response Guarantee</h3>
-                <p className="opacity-90 mb-4">
-                  We typically respond within 24 hours. For urgent matters, 
-                  feel free to reach out directly via email for faster assistance.
+            {/* Developer Note */}
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-6 border border-white/20 dark:border-gray-700/20">
+              <div className="text-center">
+                <div className="text-4xl mb-4">👨‍💻</div>
+                <h3 className="font-bold text-lg text-gray-800 dark:text-gray-200 mb-3">
+                  Personal Project
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                  Prompt2Course is a personal project built with passion for making education accessible. 
+                  I'm always excited to hear from users and continuously improve the platform based on your feedback.
                 </p>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="text-sm font-medium">Response within 24 hours</span>
+              </div>
+            </div>
+
+            {/* Response Promise */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+              <div className="text-center">
+                <div className="text-3xl mb-3">⚡</div>
+                <h3 className="font-bold text-xl mb-2">Quick Response Promise</h3>
+                <p className="opacity-90 text-sm">
+                  I personally read and respond to every message. You can expect a response within 24 hours, 
+                  often much sooner!
+                </p>
+                <div className="flex items-center justify-center space-x-2 mt-4">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Usually responds within hours</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
 
-        {/* FAQ or Additional Info Section */}
+        {/* FAQ or Additional Info */}
         <motion.div 
-          className="mt-20 text-center bg-white/60 dark:bg-gray-800/60 backdrop-blur-xl rounded-3xl p-12 border border-white/20 dark:border-gray-700/20"
-          initial={{ opacity: 0, y: 30 }}
+          className="mt-20 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl p-8 border border-white/20 dark:border-gray-700/20 text-center"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2 }}
+          transition={{ delay: 0.6 }}
         >
-          <motion.div
-            className="text-6xl mb-6"
-            animate={{ scale: [1, 1.1, 1] }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
-          >
-            💬
-          </motion.div>
+          <div className="text-5xl mb-6">🤝</div>
           <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-            Need Immediate Help?
+            Let's Build Something Amazing Together
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            For technical support, bug reports, or urgent inquiries, don't hesitate to reach out. 
-            We're committed to providing the best possible experience for all our users.
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-3xl mx-auto">
+            Whether you have feedback, found a bug, want to collaborate, or just want to say hi - 
+            I'd love to hear from you. Every message helps make Prompt2Course better for everyone.
           </p>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.a
+            <a
               href="mailto:hariprasadmanoj3@gmail.com"
-              className="inline-flex items-center space-x-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
             >
               <Mail className="w-5 h-5" />
-              <span>Email Support</span>
-            </motion.a>
-            <motion.a
+              <span>Send Direct Email</span>
+            </a>
+            <a
               href="https://github.com/hariprasadmanoj3"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center space-x-3 bg-gray-600 hover:bg-gray-700 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300"
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.95 }}
+              className="inline-flex items-center space-x-2 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white py-3 px-6 rounded-xl transition-colors"
             >
               <Github className="w-5 h-5" />
-              <span>GitHub Issues</span>
-            </motion.a>
+              <span>View on GitHub</span>
+            </a>
+          </div>
+          
+          {/* Fun fact */}
+          <div className="mt-8 flex items-center justify-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+            <Coffee className="w-4 h-4" />
+            <span>Powered by coffee and curiosity</span>
+            <Heart className="w-4 h-4 text-red-500" />
           </div>
         </motion.div>
       </main>
