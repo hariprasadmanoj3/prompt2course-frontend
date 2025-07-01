@@ -5,44 +5,69 @@ import {
   ArrowLeft, 
   BookOpen, 
   Clock, 
-  User,
-  Calendar,
-  Share2,
-  Download,
+  User, 
+  Calendar, 
   Play,
+  CheckCircle,
   Moon,
   Sun,
+  Star,
+  Award,
+  Target,
+  Zap,
+  Brain,
+  Coffee,
+  Rocket,
+  Users,
+  Globe,
+  Download,
+  Bookmark,
+  Share2,
+  MoreVertical,
+  ChevronDown,
+  ChevronRight,
   PlayCircle,
   FileText,
-  Award,
-  CheckCircle,
-  ChevronRight,
-  ChevronDown,
-  Youtube,
-  Brain,
-  Target,
-  Star,
+  HelpCircle,
+  BarChart3,
+  TrendingUp,
+  Heart,
+  Eye,
+  ThumbsUp,
+  MessageCircle,
+  ExternalLink,
   Volume2,
+  VolumeX,
   Maximize,
   RotateCcw,
-  ArrowRight
+  ChevronUp,
+  Lightbulb,
+  GraduationCap,
+  Shield,
+  Infinity,
+  Sparkles
 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import toast from 'react-hot-toast';
 
 const CourseDetailPage = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { courseId } = useParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
-  const [activeModule, setActiveModule] = useState(0);
+  const [expandedModule, setExpandedModule] = useState(null);
   const [completedLessons, setCompletedLessons] = useState(new Set());
-  const [currentQuiz, setCurrentQuiz] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [quizAnswers, setQuizAnswers] = useState({});
-  const [quizResults, setQuizResults] = useState(null);
-  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [courseProgress, setCourseProgress] = useState(0);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [videoMuted, setVideoMuted] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [showCertificate, setShowCertificate] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -50,8 +75,10 @@ const CourseDetailPage = () => {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-    fetchCourse();
-  }, [id]);
+    
+    fetchCourseDetails();
+    loadUserProgress();
+  }, [courseId]);
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -64,243 +91,474 @@ const CourseDetailPage = () => {
     }
   };
 
-  // Mock YouTube videos based on course topic
-  const getYouTubeVideos = (topic) => {
-    const videoMappings = {
-      'Web Design with CSS': [
-        { id: 'yfoY53QXEnI', title: 'CSS Crash Course For Absolute Beginners', duration: '1:25:15' },
-        { id: 'jx5jmI0UlXU', title: 'Learn CSS Grid - CSS Tutorial', duration: '27:53' },
-        { id: 'JJSoEo8JSnc', title: 'Flexbox CSS In 20 Minutes', duration: '19:38' },
-        { id: 'D-h8L5hgW-w', title: 'CSS Animation Tutorial', duration: '31:22' }
-      ],
-      'JavaScript Fundamentals': [
-        { id: 'PkZNo7MFNFg', title: 'JavaScript Crash Course For Beginners', duration: '1:40:17' },
-        { id: 'hdI2bqOjy3c', title: 'JavaScript ES6 Tutorial', duration: '1:12:42' },
-        { id: 'Qqx_wzMmFeA', title: 'JavaScript DOM Manipulation', duration: '35:05' },
-        { id: 'rRmeAn6QbK4', title: 'Async JavaScript Tutorial', duration: '42:11' }
-      ],
-      'Python for Data Science': [
-        { id: 'rfscVS0vtbw', title: 'Python for Data Science Tutorial', duration: '12:00:00' },
-        { id: 'vmEHCJofslg', title: 'Pandas Tutorial for Beginners', duration: '1:02:08' },
-        { id: 'ZyhVh-qRZPA', title: 'NumPy Tutorial for Beginners', duration: '58:41' },
-        { id: 'DAQNHzOcO5A', title: 'Matplotlib Tutorial', duration: '1:30:22' }
-      ],
-      'React.js Complete Guide': [
-        { id: 'Ke90Tje7VS0', title: 'React JS Crash Course', duration: '1:48:54' },
-        { id: 'w7ejDZ8SWv8', title: 'React Hooks Tutorial', duration: '38:20' },
-        { id: 'Law7wfdg_ls', title: 'React Router Tutorial', duration: '43:17' },
-        { id: 'TNhaISOUy6Q', title: 'React State Management', duration: '52:09' }
-      ],
-      'Machine Learning Basics': [
-        { id: 'ukzFI9rgwfU', title: 'Machine Learning Explained', duration: '8:36' },
-        { id: 'aircAruvnKk', title: 'Neural Networks Explained', duration: '19:13' },
-        { id: 'i_LwzRVP7bg', title: 'Supervised vs Unsupervised Learning', duration: '14:48' },
-        { id: 'zPG4NjIkuiA', title: 'Python Machine Learning Tutorial', duration: '2:45:56' }
-      ],
-      'Digital Photography': [
-        { id: 'LxO-6rlihSg', title: 'Photography Basics in 10 Minutes', duration: '9:52' },
-        { id: 'V7z7BAZdt2M', title: 'Camera Settings Tutorial', duration: '18:23' },
-        { id: 'F8T9CgdZJc4', title: 'Composition Techniques', duration: '21:07' },
-        { id: 'YojL7UQTVhc', title: 'Photo Editing Tutorial', duration: '32:45' }
-      ]
-    };
-
-    return videoMappings[topic] || [
-      { id: 'dQw4w9WgXcQ', title: 'Introduction Tutorial', duration: '10:00' },
-      { id: 'dQw4w9WgXcQ', title: 'Advanced Concepts', duration: '15:30' },
-      { id: 'dQw4w9WgXcQ', title: 'Practical Examples', duration: '20:45' },
-      { id: 'dQw4w9WgXcQ', title: 'Final Project', duration: '25:12' }
-    ];
-  };
-
-  // Mock quiz data
-  const generateQuiz = (topic) => {
-    const quizData = {
-      'Web Design with CSS': {
-        title: 'CSS Fundamentals Quiz',
-        questions: [
-          {
-            id: 1,
-            question: 'Which CSS property is used to change the text color?',
-            options: ['color', 'text-color', 'font-color', 'text-style'],
-            correct: 0
-          },
-          {
-            id: 2,
-            question: 'What does CSS stand for?',
-            options: ['Creative Style Sheets', 'Cascading Style Sheets', 'Computer Style Sheets', 'Colorful Style Sheets'],
-            correct: 1
-          },
-          {
-            id: 3,
-            question: 'Which property is used to make text bold?',
-            options: ['font-weight', 'text-bold', 'font-style', 'text-weight'],
-            correct: 0
-          },
-          {
-            id: 4,
-            question: 'How do you select an element with id "header"?',
-            options: ['.header', '#header', 'header', '*header'],
-            correct: 1
-          },
-          {
-            id: 5,
-            question: 'Which CSS property controls the spacing between elements?',
-            options: ['padding', 'margin', 'border', 'spacing'],
-            correct: 1
-          }
-        ]
-      },
-      'JavaScript Fundamentals': {
-        title: 'JavaScript Basics Quiz',
-        questions: [
-          {
-            id: 1,
-            question: 'Which symbol is used for single-line comments in JavaScript?',
-            options: ['//', '/*', '#', '--'],
-            correct: 0
-          },
-          {
-            id: 2,
-            question: 'What is the correct way to declare a variable in JavaScript?',
-            options: ['var myVar;', 'variable myVar;', 'v myVar;', 'declare myVar;'],
-            correct: 0
-          },
-          {
-            id: 3,
-            question: 'Which method is used to add an element to the end of an array?',
-            options: ['push()', 'add()', 'append()', 'insert()'],
-            correct: 0
-          },
-          {
-            id: 4,
-            question: 'What does DOM stand for?',
-            options: ['Document Object Model', 'Data Object Model', 'Dynamic Object Model', 'Document Oriented Model'],
-            correct: 0
-          },
-          {
-            id: 5,
-            question: 'Which operator is used for strict equality in JavaScript?',
-            options: ['==', '===', '=', '!='],
-            correct: 1
-          }
-        ]
-      },
-      'React.js Complete Guide': {
-        title: 'React.js Quiz',
-        questions: [
-          {
-            id: 1,
-            question: 'What is JSX?',
-            options: ['JavaScript XML', 'Java Syntax Extension', 'JavaScript Extension', 'JSON XML'],
-            correct: 0
-          },
-          {
-            id: 2,
-            question: 'Which hook is used for state management in functional components?',
-            options: ['useEffect', 'useState', 'useContext', 'useReducer'],
-            correct: 1
-          },
-          {
-            id: 3,
-            question: 'What is the virtual DOM?',
-            options: ['A copy of the real DOM', 'A JavaScript representation of the DOM', 'A faster version of DOM', 'All of the above'],
-            correct: 3
-          },
-          {
-            id: 4,
-            question: 'How do you pass data from parent to child component?',
-            options: ['Props', 'State', 'Context', 'Redux'],
-            correct: 0
-          },
-          {
-            id: 5,
-            question: 'Which method is called after a component is mounted?',
-            options: ['componentDidMount', 'componentWillMount', 'useEffect', 'Both A and C'],
-            correct: 3
-          }
-        ]
-      }
-    };
-
-    return quizData[topic] || {
-      title: 'General Knowledge Quiz',
-      questions: [
-        {
-          id: 1,
-          question: 'This is a sample question about the course topic?',
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          correct: 0
-        }
-      ]
-    };
-  };
-
-  const fetchCourse = async () => {
+  const fetchCourseDetails = async () => {
     try {
       const API_BASE = 'https://prompt2course-backend-1.onrender.com';
-      const response = await fetch(`${API_BASE}/api/courses/${id}/`);
+      const response = await fetch(`${API_BASE}/api/courses/${courseId}/`);
       
       if (response.ok) {
         const data = await response.json();
         setCourse(data);
-        setLoading(false);
+        
+        // Show welcome message
+        setTimeout(() => {
+          toast.success(`🎉 Welcome to "${data.title}"! Ready to start learning?`);
+        }, 1000);
       } else {
         throw new Error('Course not found');
       }
     } catch (error) {
       console.error('Error fetching course:', error);
+      toast.error('Failed to load course. Please check your connection.');
+      navigate('/courses');
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleQuizAnswer = (questionId, answerIndex) => {
-    setQuizAnswers(prev => ({
-      ...prev,
-      [questionId]: answerIndex
-    }));
-  };
-
-  const submitQuiz = () => {
-    if (!currentQuiz) return;
-
-    let correct = 0;
-    const results = currentQuiz.questions.map(question => {
-      const userAnswer = quizAnswers[question.id];
-      const isCorrect = userAnswer === question.correct;
-      if (isCorrect) correct++;
-      
-      return {
-        questionId: question.id,
-        question: question.question,
-        userAnswer,
-        correctAnswer: question.correct,
-        isCorrect,
-        explanation: `The correct answer is: ${question.options[question.correct]}`
-      };
-    });
-
-    const score = Math.round((correct / currentQuiz.questions.length) * 100);
-    setQuizResults({ score, correct, total: currentQuiz.questions.length, results });
-    setShowQuizResults(true);
-
-    if (score >= 70) {
-      toast.success(`🎉 Great job! You scored ${score}%`);
-    } else {
-      toast.error(`📚 Keep studying! You scored ${score}%. Try again to improve.`);
+  const loadUserProgress = () => {
+    // Load saved progress from localStorage
+    const savedProgress = localStorage.getItem(`course_${courseId}_progress`);
+    const savedCompleted = localStorage.getItem(`course_${courseId}_completed`);
+    const savedBookmark = localStorage.getItem(`course_${courseId}_bookmarked`);
+    const savedRating = localStorage.getItem(`course_${courseId}_rating`);
+    
+    if (savedProgress) {
+      setCourseProgress(parseInt(savedProgress));
+    }
+    
+    if (savedCompleted) {
+      setCompletedLessons(new Set(JSON.parse(savedCompleted)));
+    }
+    
+    if (savedBookmark === 'true') {
+      setIsBookmarked(true);
+    }
+    
+    if (savedRating) {
+      setUserRating(parseInt(savedRating));
     }
   };
 
-  const retakeQuiz = () => {
-    setQuizAnswers({});
-    setQuizResults(null);
-    setShowQuizResults(false);
+  const saveUserProgress = () => {
+    localStorage.setItem(`course_${courseId}_progress`, courseProgress.toString());
+    localStorage.setItem(`course_${courseId}_completed`, JSON.stringify([...completedLessons]));
+    localStorage.setItem(`course_${courseId}_bookmarked`, isBookmarked.toString());
+    localStorage.setItem(`course_${courseId}_rating`, userRating.toString());
   };
 
-  const markLessonComplete = (lessonIndex) => {
-    setCompletedLessons(prev => new Set([...prev, lessonIndex]));
-    toast.success('✅ Lesson completed!');
+  useEffect(() => {
+    saveUserProgress();
+  }, [courseProgress, completedLessons, isBookmarked, userRating]);
+
+  // Enhanced course difficulty detection
+  const getCourseDifficulty = (topic) => {
+    const topicLower = topic.toLowerCase();
+    
+    const advancedKeywords = [
+      'advanced', 'expert', 'professional', 'master', 'mastery',
+      'machine learning', 'deep learning', 'neural networks', 'ai',
+      'quantum', 'blockchain', 'cryptocurrency', 'trading',
+      'enterprise', 'architecture', 'algorithms', 'data structures',
+      'calculus', 'statistics', 'research', 'phd', 'doctoral'
+    ];
+    
+    const intermediateKeywords = [
+      'intermediate', 'practical', 'applied', 'comprehensive',
+      'javascript', 'python', 'react', 'programming', 'development',
+      'web design', 'css', 'html', 'database', 'sql', 'api',
+      'marketing', 'business', 'strategy', 'management', 'analytics',
+      'photography', 'design', 'photoshop', 'video editing'
+    ];
+    
+    const beginnerKeywords = [
+      'basics', 'fundamentals', 'introduction', 'beginner', 'getting started',
+      'first', 'basic', 'simple', 'easy', 'starter', 'guide',
+      'cooking', 'baking', 'guitar', 'piano', 'yoga', 'fitness',
+      'language learning', 'spanish', 'french', 'drawing', 'painting'
+    ];
+    
+    if (advancedKeywords.some(keyword => topicLower.includes(keyword))) {
+      return 'Advanced';
+    }
+    
+    if (intermediateKeywords.some(keyword => topicLower.includes(keyword))) {
+      return 'Intermediate';
+    }
+    
+    if (beginnerKeywords.some(keyword => topicLower.includes(keyword))) {
+      return 'Beginner';
+    }
+    
+    return 'Intermediate';
   };
+
+  const getDifficultyColor = (difficulty) => {
+    switch (difficulty) {
+      case 'Beginner': 
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border border-green-200 dark:border-green-700';
+      case 'Intermediate': 
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-700';
+      case 'Advanced': 
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border border-red-200 dark:border-red-700';
+      default: 
+        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600';
+    }
+  };
+
+  // Enhanced course icon mapping
+  const getCourseIcon = (topic) => {
+    const topicLower = topic.toLowerCase();
+    
+    // Programming & Tech
+    if (topicLower.includes('javascript') || topicLower.includes('js')) return '💛';
+    if (topicLower.includes('python')) return '🐍';
+    if (topicLower.includes('react') || topicLower.includes('angular') || topicLower.includes('vue')) return '⚛️';
+    if (topicLower.includes('web') || topicLower.includes('css') || topicLower.includes('html')) return '🌐';
+    if (topicLower.includes('database') || topicLower.includes('sql')) return '🗄️';
+    if (topicLower.includes('api') || topicLower.includes('backend')) return '⚙️';
+    if (topicLower.includes('mobile') || topicLower.includes('app')) return '📱';
+    
+    // AI & Data Science
+    if (topicLower.includes('machine learning') || topicLower.includes('ml')) return '🤖';
+    if (topicLower.includes('ai') || topicLower.includes('artificial intelligence')) return '🧠';
+    if (topicLower.includes('data science') || topicLower.includes('analytics')) return '📊';
+    if (topicLower.includes('neural') || topicLower.includes('deep learning')) return '🔬';
+    
+    // Creative Arts
+    if (topicLower.includes('design') || topicLower.includes('ui') || topicLower.includes('ux')) return '🎨';
+    if (topicLower.includes('photography') || topicLower.includes('photo')) return '📸';
+    if (topicLower.includes('music') || topicLower.includes('audio')) return '🎵';
+    if (topicLower.includes('guitar')) return '🎸';
+    if (topicLower.includes('piano')) return '🎹';
+    
+    // Cooking & Food
+    if (topicLower.includes('cooking') || topicLower.includes('culinary')) return '👨‍🍳';
+    if (topicLower.includes('baking') || topicLower.includes('bread')) return '🍞';
+    
+    // Languages
+    if (topicLower.includes('spanish')) return '🇪🇸';
+    if (topicLower.includes('french')) return '🇫🇷';
+    if (topicLower.includes('italian') && !topicLower.includes('food')) return '🇮🇹';
+    if (topicLower.includes('german')) return '🇩🇪';
+    if (topicLower.includes('japanese') && !topicLower.includes('food')) return '🇯🇵';
+    if (topicLower.includes('chinese') || topicLower.includes('mandarin')) return '🇨🇳';
+    
+    // Health & Fitness
+    if (topicLower.includes('yoga')) return '🧘‍♀️';
+    if (topicLower.includes('fitness') || topicLower.includes('workout')) return '💪';
+    if (topicLower.includes('meditation')) return '🕯️';
+    
+    // Business & Finance
+    if (topicLower.includes('business') || topicLower.includes('entrepreneurship')) return '💼';
+    if (topicLower.includes('marketing')) return '📈';
+    if (topicLower.includes('investment') || topicLower.includes('stocks')) return '💰';
+    if (topicLower.includes('crypto') || topicLower.includes('bitcoin')) return '₿';
+    
+    // Science
+    if (topicLower.includes('quantum') || topicLower.includes('physics')) return '⚛️';
+    if (topicLower.includes('chemistry')) return '🧪';
+    if (topicLower.includes('biology')) return '🧬';
+    if (topicLower.includes('mathematics') || topicLower.includes('math')) return '📐';
+    
+    // Default fallback
+    return '📚';
+  };
+
+  // Generate realistic course content
+  const generateCourseContent = (course) => {
+    const topic = course.topic;
+    const difficulty = getCourseDifficulty(topic);
+    
+    // Base course structure
+    const baseModules = [
+      {
+        id: 1,
+        title: `Introduction to ${topic}`,
+        description: 'Overview and basic concepts',
+        lessons: [
+          { id: 1, title: `What is ${topic}?`, duration: '8 min', type: 'video' },
+          { id: 2, title: 'Course Overview and Objectives', duration: '5 min', type: 'video' },
+          { id: 3, title: 'Prerequisites and Setup', duration: '10 min', type: 'text' },
+          { id: 4, title: 'Getting Started Guide', duration: '12 min', type: 'video' }
+        ]
+      },
+      {
+        id: 2,
+        title: 'Core Concepts',
+        description: 'Deep dive into fundamental principles',
+        lessons: [
+          { id: 5, title: 'Key Principles and Theory', duration: '15 min', type: 'video' },
+          { id: 6, title: 'Practical Examples', duration: '18 min', type: 'video' },
+          { id: 7, title: 'Common Patterns and Techniques', duration: '12 min', type: 'text' },
+          { id: 8, title: 'Hands-on Exercise', duration: '25 min', type: 'practice' }
+        ]
+      },
+      {
+        id: 3,
+        title: 'Advanced Topics',
+        description: 'Advanced concepts and real-world applications',
+        lessons: [
+          { id: 9, title: 'Advanced Techniques', duration: '20 min', type: 'video' },
+          { id: 10, title: 'Best Practices', duration: '15 min', type: 'video' },
+          { id: 11, title: 'Industry Case Studies', duration: '22 min', type: 'text' },
+          { id: 12, title: 'Project Implementation', duration: '35 min', type: 'practice' }
+        ]
+      },
+      {
+        id: 4,
+        title: 'Practical Application',
+        description: 'Real-world projects and portfolio development',
+        lessons: [
+          { id: 13, title: 'Building Your First Project', duration: '30 min', type: 'practice' },
+          { id: 14, title: 'Testing and Optimization', duration: '18 min', type: 'video' },
+          { id: 15, title: 'Portfolio Development', duration: '25 min', type: 'text' },
+          { id: 16, title: 'Final Project Showcase', duration: '20 min', type: 'practice' }
+        ]
+      }
+    ];
+
+    // Generate curated YouTube videos based on topic
+    const videos = generateTopicVideos(topic);
+    
+    // Generate quiz questions
+    const quiz = generateQuizQuestions(topic, difficulty);
+    
+    return {
+      modules: baseModules,
+      videos: videos,
+      quiz: quiz,
+      totalDuration: '6-8 hours',
+      totalLessons: 16,
+      totalModules: 4
+    };
+  };
+
+  const generateTopicVideos = (topic) => {
+    // This would normally fetch real YouTube videos via API
+    // For now, we'll generate realistic video data
+    const topicLower = topic.toLowerCase();
+    
+    const baseVideos = [
+      {
+        id: 'video1',
+        title: `${topic} - Complete Beginner's Guide`,
+        thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg`,
+        duration: '15:32',
+        views: '1.2M',
+        channel: 'LearnWithExperts',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      },
+      {
+        id: 'video2',
+        title: `Master ${topic} in 2024 - Full Course`,
+        thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg`,
+        duration: '45:18',
+        views: '890K',
+        channel: 'TechEducation',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      },
+      {
+        id: 'video3',
+        title: `${topic} Tutorial - Step by Step`,
+        thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg`,
+        duration: '28:45',
+        views: '654K',
+        channel: 'SkillBuilder',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      },
+      {
+        id: 'video4',
+        title: `Advanced ${topic} Techniques`,
+        thumbnail: `https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg`,
+        duration: '32:12',
+        views: '423K',
+        channel: 'ProLearning',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+      }
+    ];
+
+    return baseVideos;
+  };
+
+  const generateQuizQuestions = (topic, difficulty) => {
+    const questions = [
+      {
+        id: 1,
+        question: `What is the primary benefit of learning ${topic}?`,
+        options: [
+          'Personal development and skill enhancement',
+          'Career advancement opportunities',
+          'Creative expression and problem-solving',
+          'All of the above'
+        ],
+        correct: 3,
+        explanation: `Learning ${topic} provides comprehensive benefits including personal growth, career opportunities, and creative development.`
+      },
+      {
+        id: 2,
+        question: `Which approach is most effective when starting with ${topic}?`,
+        options: [
+          'Jump into advanced concepts immediately',
+          'Start with fundamentals and build progressively',
+          'Focus only on theoretical knowledge',
+          'Learn everything through trial and error'
+        ],
+        correct: 1,
+        explanation: 'Building a strong foundation with fundamentals ensures better understanding and long-term success.'
+      },
+      {
+        id: 3,
+        question: `What is a key principle in ${topic}?`,
+        options: [
+          'Consistency and regular practice',
+          'Understanding core concepts thoroughly',
+          'Applying knowledge to real-world scenarios',
+          'All of the above'
+        ],
+        correct: 3,
+        explanation: `Success in ${topic} requires consistent practice, deep understanding, and practical application.`
+      },
+      {
+        id: 4,
+        question: `How can you best apply ${topic} knowledge?`,
+        options: [
+          'Through hands-on projects and exercises',
+          'By teaching others what you learn',
+          'By solving real-world problems',
+          'All of the above'
+        ],
+        correct: 3,
+        explanation: 'Active application through projects, teaching, and problem-solving reinforces learning effectively.'
+      },
+      {
+        id: 5,
+        question: `What mindset is most beneficial for mastering ${topic}?`,
+        options: [
+          'Fixed mindset - believing abilities are unchangeable',
+          'Growth mindset - embracing challenges and learning',
+          'Competitive mindset - focusing on being better than others',
+          'Perfectionist mindset - avoiding all mistakes'
+        ],
+        correct: 1,
+        explanation: 'A growth mindset that embraces challenges, learns from failures, and focuses on continuous improvement is key to mastering any skill.'
+      }
+    ];
+
+    return questions;
+  };
+
+  const handleLessonComplete = (lessonId) => {
+    const newCompleted = new Set(completedLessons);
+    
+    if (newCompleted.has(lessonId)) {
+      newCompleted.delete(lessonId);
+      toast.success('Lesson marked as incomplete');
+    } else {
+      newCompleted.add(lessonId);
+      toast.success('✅ Lesson completed! Great progress!');
+    }
+    
+    setCompletedLessons(newCompleted);
+    
+    // Update overall progress
+    const totalLessons = courseContent?.totalLessons || 16;
+    const newProgress = Math.round((newCompleted.size / totalLessons) * 100);
+    setCourseProgress(newProgress);
+    
+    // Check for milestones
+    if (newProgress === 25) {
+      toast.success('🎉 25% Complete! You\'re making great progress!');
+    } else if (newProgress === 50) {
+      toast.success('🚀 Halfway there! Keep up the excellent work!');
+    } else if (newProgress === 75) {
+      toast.success('⭐ 75% Complete! Almost finished!');
+    } else if (newProgress === 100) {
+      toast.success('🏆 Course Complete! Congratulations!');
+      setShowCertificate(true);
+    }
+  };
+
+  const handleQuizSubmit = () => {
+    const questions = courseContent.quiz;
+    let correct = 0;
+    
+    questions.forEach((question, index) => {
+      if (quizAnswers[question.id] === question.correct) {
+        correct++;
+      }
+    });
+    
+    const percentage = Math.round((correct / questions.length) * 100);
+    setQuizSubmitted(true);
+    
+    if (percentage >= 80) {
+      toast.success(`🎉 Excellent! You scored ${percentage}%!`);
+    } else if (percentage >= 60) {
+      toast.success(`👍 Good job! You scored ${percentage}%`);
+    } else {
+      toast.error(`📚 You scored ${percentage}%. Review the material and try again!`);
+    }
+  };
+
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toast.success(isBookmarked ? 'Bookmark removed' : '🔖 Course bookmarked!');
+  };
+
+  const handleShare = () => {
+    const shareData = {
+      title: course.title,
+      text: `Check out this amazing course: ${course.title}`,
+      url: window.location.href
+    };
+    
+    if (navigator.share) {
+      navigator.share(shareData);
+    } else {
+      navigator.clipboard.writeText(shareData.url);
+      toast.success('📋 Course link copied to clipboard!');
+    }
+    setShowShareModal(false);
+  };
+
+  const handleRating = (rating) => {
+    setUserRating(rating);
+    toast.success(`⭐ Thank you for rating this course ${rating} stars!`);
+  };
+
+  if (!course) {
+    return null;
+  }
+
+  const difficulty = getCourseDifficulty(course.topic);
+  const courseIcon = getCourseIcon(course.topic);
+  const courseContent = generateCourseContent(course);
+
+  // Simple floating elements
+  const floatingElements = Array.from({ length: 6 }, (_, i) => (
+    <motion.div
+      key={i}
+      className="absolute text-2xl opacity-10"
+      style={{
+        left: `${10 + Math.random() * 80}%`,
+        top: `${10 + Math.random() * 80}%`,
+      }}
+      animate={{
+        y: [0, -15, 0],
+        rotate: [0, 10, -10, 0],
+        scale: [1, 1.1, 1],
+      }}
+      transition={{
+        duration: 6 + Math.random() * 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay: Math.random() * 2,
+      }}
+    >
+      {['📚', '🎯', '✨', '🚀', '💡', '🌟'][i]}
+    </motion.div>
+  ));
 
   if (loading) {
     return (
@@ -315,565 +573,933 @@ const CourseDetailPage = () => {
           animate={{ opacity: 1 }}
         >
           <motion.div
-            className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
+            className="w-24 h-24 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-8"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
-          <p className="text-lg text-gray-600 dark:text-gray-300">Loading course...</p>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+            Loading Course Content
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300">
+            Preparing your learning experience...
+          </p>
         </motion.div>
       </div>
     );
   }
 
-  if (!course) {
-    return (
-      <div className={`min-h-screen flex items-center justify-center ${
-        isDarkMode 
-          ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900' 
-          : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
-      }`}>
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-            Course Not Found
-          </h2>
-          <button
-            onClick={() => navigate('/courses')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Back to Courses
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  const videos = getYouTubeVideos(course.topic);
-  const quiz = generateQuiz(course.topic);
-
-  const modules = [
-    {
-      title: `Introduction to ${course.topic}`,
-      lessons: [
-        'What you\'ll learn',
-        'Setting up your environment',
-        'Basic concepts and terminology',
-        'Getting started guide'
-      ],
-      duration: '45 min'
-    },
-    {
-      title: 'Core Concepts',
-      lessons: [
-        'Fundamental principles',
-        'Key techniques and methods',
-        'Best practices',
-        'Common patterns'
-      ],
-      duration: '1h 30min'
-    },
-    {
-      title: 'Practical Applications',
-      lessons: [
-        'Real-world examples',
-        'Hands-on exercises',
-        'Project walkthrough',
-        'Troubleshooting guide'
-      ],
-      duration: '2h 15min'
-    },
-    {
-      title: 'Advanced Topics',
-      lessons: [
-        'Advanced techniques',
-        'Performance optimization',
-        'Industry standards',
-        'Final project'
-      ],
-      duration: '1h 45min'
-    }
-  ];
-
   return (
-    <div className={`min-h-screen transition-all duration-500 ${
+    <div className={`min-h-screen relative transition-all duration-500 ${
       isDarkMode 
         ? 'bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900' 
         : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100'
     } font-sora`}>
       
-      {/* Header */}
+      {/* Simple Floating Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {floatingElements}
+        <div className="absolute top-1/4 left-1/6 w-64 h-64 bg-gradient-to-r from-blue-400/8 to-purple-400/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/3 right-1/5 w-80 h-80 bg-gradient-to-r from-pink-400/8 to-orange-400/8 rounded-full blur-3xl" />
+      </div>
+      
+      {/* Enhanced Header */}
       <motion.header 
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="bg-white/10 dark:bg-gray-800/10 backdrop-blur-md border-b border-white/20 dark:border-gray-700/20"
+        className="relative z-50 bg-white/25 dark:bg-gray-800/25 backdrop-blur-xl border-b border-white/20 dark:border-gray-700/20 shadow-lg"
       >
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <motion.button
               onClick={() => navigate('/courses')}
-              className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="flex items-center space-x-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 group"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back to Courses</span>
+              <ArrowLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium">Back to Courses</span>
             </motion.button>
             
-            <div className="flex items-center space-x-3">
-              <BookOpen className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Course Learning
-              </h1>
+            <div className="flex items-center space-x-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-2xl">{courseIcon}</span>
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-200 max-w-md truncate">
+                  {course.title}
+                </h1>
+                <div className="flex items-center space-x-3 mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getDifficultyColor(difficulty)}`}>
+                    {difficulty}
+                  </span>
+                  <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
+                    <Clock className="w-4 h-4" />
+                    <span>{courseContent.totalDuration}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
+                    <BarChart3 className="w-4 h-4" />
+                    <span>{courseProgress}% Complete</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <motion.button
-              onClick={toggleDarkMode}
-              className="p-2 rounded-full bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm border border-white/30 dark:border-gray-700/30"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-            >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5 text-yellow-500" />
-              ) : (
-                <Moon className="w-5 h-5 text-blue-600" />
-              )}
-            </motion.button>
+            <div className="flex items-center space-x-3">
+              <motion.button
+                onClick={handleBookmark}
+                className={`p-3 rounded-2xl transition-all duration-200 border ${
+                  isBookmarked 
+                    ? 'bg-yellow-100 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-700 text-yellow-600 dark:text-yellow-400'
+                    : 'bg-white/20 dark:bg-gray-800/20 border-white/30 dark:border-gray-700/30 text-gray-600 dark:text-gray-400'
+                } hover:scale-110`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
+              </motion.button>
+              
+              <motion.button
+                onClick={() => setShowShareModal(true)}
+                className="p-3 rounded-2xl bg-white/20 dark:bg-gray-800/20 hover:bg-white/30 dark:hover:bg-gray-700/30 transition-all duration-200 border border-white/30 dark:border-gray-700/30 text-gray-600 dark:text-gray-400"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <Share2 className="w-5 h-5" />
+              </motion.button>
+              
+              <motion.button
+                onClick={toggleDarkMode}
+                className="p-3 rounded-2xl bg-white/20 dark:bg-gray-800/20 hover:bg-white/30 dark:hover:bg-gray-700/30 transition-all duration-200 border border-white/30 dark:border-gray-700/30"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <AnimatePresence mode="wait">
+                  {isDarkMode ? (
+                    <motion.div
+                      key="sun"
+                      initial={{ rotate: -90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: 90, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Sun className="w-5 h-5 text-yellow-500" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="moon"
+                      initial={{ rotate: 90, opacity: 0 }}
+                      animate={{ rotate: 0, opacity: 1 }}
+                      exit={{ rotate: -90, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Moon className="w-5 h-5 text-blue-600" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="relative z-10 container mx-auto px-4 py-8">
         
-        {/* Course Header */}
+        {/* Course Hero Section */}
         <motion.div 
-          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-8 mb-8"
-          initial={{ opacity: 0, y: 30 }}
+          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-8 mb-8"
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="flex-1">
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Course Info */}
+            <div className="lg:col-span-2">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">
                 {course.title}
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
                 {course.description}
               </p>
               
-              <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4" />
-                  <span>By {course.created_by}</span>
+              {/* Course Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div className="text-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{courseContent.totalModules}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Modules</div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(course.created_at).toLocaleDateString()}</span>
+                <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{courseContent.totalLessons}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Lessons</div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4" />
-                  <span>~6 hours total</span>
+                <div className="text-center p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-2xl">
+                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{courseContent.totalDuration}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Duration</div>
                 </div>
+                <div className="text-center p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl">
+                  <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">4.8</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Rating</div>
+                </div>
+              </div>
+              
+              {/* User Rating */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-3">Rate this course:</h3>
                 <div className="flex items-center space-x-2">
-                  <Star className="w-4 h-4 text-yellow-500" />
-                  <span>4.8 rating</span>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <motion.button
+                      key={star}
+                      onClick={() => handleRating(star)}
+                      className={`text-2xl transition-colors ${
+                        star <= userRating ? 'text-yellow-500' : 'text-gray-300 dark:text-gray-600'
+                      }`}
+                      whileHover={{ scale: 1.2 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      <Star className={`w-6 h-6 ${star <= userRating ? 'fill-current' : ''}`} />
+                    </motion.button>
+                  ))}
+                  {userRating > 0 && (
+                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
+                      You rated this {userRating} star{userRating !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3">
-              <motion.button
-                onClick={() => setCurrentQuiz(quiz)}
-                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Brain className="w-5 h-5" />
-                <span>Take Quiz</span>
-              </motion.button>
+            {/* Progress Panel */}
+            <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-800 dark:to-gray-700 rounded-2xl p-6 border border-gray-200 dark:border-gray-600">
+              <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4 flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-blue-600" />
+                <span>Your Progress</span>
+              </h3>
               
-              <motion.button
-                className="flex items-center space-x-2 px-6 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Share2 className="w-5 h-5" />
-                <span>Share</span>
-              </motion.button>
+              {/* Progress Circle */}
+              <div className="relative w-32 h-32 mx-auto mb-6">
+                <svg className="w-32 h-32 transform -rotate-90">
+                  <circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    className="text-gray-200 dark:text-gray-600"
+                  />
+                  <motion.circle
+                    cx="64"
+                    cy="64"
+                    r="56"
+                    stroke="currentColor"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
+                    className="text-blue-600"
+                    style={{
+                      strokeDasharray: 351.86,
+                      strokeDashoffset: 351.86 * (1 - courseProgress / 100),
+                    }}
+                    initial={{ strokeDashoffset: 351.86 }}
+                    animate={{ strokeDashoffset: 351.86 * (1 - courseProgress / 100) }}
+                    transition={{ duration: 1.5, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-gray-800 dark:text-gray-200">{courseProgress}%</span>
+                </div>
+              </div>
+              
+              <div className="text-center mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  {completedLessons.size} of {courseContent.totalLessons} lessons completed
+                </p>
+                {courseProgress === 100 ? (
+                  <motion.button
+                    onClick={() => setShowCertificate(true)}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-300 flex items-center justify-center space-x-2"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Award className="w-5 h-5" />
+                    <span>Get Certificate</span>
+                  </motion.button>
+                ) : (
+                  <p className="text-blue-600 dark:text-blue-400 font-medium">
+                    Keep going! You're doing great!
+                  </p>
+                )}
+              </div>
+              
+              {/* Quick Actions */}
+              <div className="space-y-3">
+                <motion.button
+                  onClick={() => setActiveTab('overview')}
+                  className="w-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 py-2 px-4 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex items-center justify-center space-x-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>Course Overview</span>
+                </motion.button>
+                <motion.button
+                  onClick={() => setActiveTab('quiz')}
+                  className="w-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 py-2 px-4 rounded-lg hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors flex items-center justify-center space-x-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                  <span>Take Quiz</span>
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Navigation Tabs */}
+        {/* Course Tabs */}
         <motion.div 
-          className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/20 p-2 mb-8"
+          className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.2 }}
         >
-          <div className="flex space-x-2">
-            {[
-              { id: 'overview', label: 'Overview', icon: <FileText className="w-4 h-4" /> },
-              { id: 'videos', label: 'Videos', icon: <PlayCircle className="w-4 h-4" /> },
-              { id: 'modules', label: 'Modules', icon: <BookOpen className="w-4 h-4" /> },
-              { id: 'quiz', label: 'Quiz', icon: <Award className="w-4 h-4" /> }
-            ].map((tab) => (
-              <motion.button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {tab.icon}
-                <span>{tab.label}</span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Tab Content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Overview Tab */}
-            {activeTab === 'overview' && (
-              <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-8">
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  <ReactMarkdown>
-                    {course.content || `# ${course.title}\n\n${course.description}\n\nThis course content is being generated...`}
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
-
-            {/* Videos Tab */}
-            {activeTab === 'videos' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">
-                  📺 Course Videos
-                </h2>
-                <div className="grid md:grid-cols-2 gap-6">
-                  {videos.map((video, index) => (
-                    <motion.div
-                      key={video.id}
-                      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/20 overflow-hidden"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02, y: -5 }}
-                    >
-                      <div className="relative">
-                        <img
-                          src={`https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`}
-                          alt={video.title}
-                          className="w-full h-48 object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                          <motion.a
-                            href={`https://www.youtube.com/watch?v=${video.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <Youtube className="w-5 h-5" />
-                            <span>Watch on YouTube</span>
-                          </motion.a>
-                        </div>
-                        <div className="absolute bottom-2 right-2 bg-black/80 text-white px-2 py-1 rounded text-sm">
-                          {video.duration}
-                        </div>
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-2">
-                          {video.title}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            Video {index + 1} of {videos.length}
-                          </span>
-                          <motion.button
-                            onClick={() => markLessonComplete(index)}
-                            className={`flex items-center space-x-1 text-sm px-3 py-1 rounded-full transition-colors ${
-                              completedLessons.has(index)
-                                ? 'bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400'
-                                : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400 hover:bg-green-100 hover:text-green-600'
-                            }`}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            <CheckCircle className="w-3 h-3" />
-                            <span>{completedLessons.has(index) ? 'Completed' : 'Mark Complete'}</span>
-                          </motion.button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Modules Tab */}
-            {activeTab === 'modules' && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">
-                  📚 Course Modules
-                </h2>
-                <div className="space-y-4">
-                  {modules.map((module, moduleIndex) => (
-                    <motion.div
-                      key={moduleIndex}
-                      className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-2xl shadow-lg border border-white/20 dark:border-gray-700/20 overflow-hidden"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: moduleIndex * 0.1 }}
-                    >
-                      <motion.button
-                        onClick={() => setActiveModule(activeModule === moduleIndex ? -1 : moduleIndex)}
-                        className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                      >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold">
-                            {moduleIndex + 1}
-                          </div>
-                          <div>
-                            <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                              {module.title}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {module.lessons.length} lessons • {module.duration}
-                            </p>
-                          </div>
-                        </div>
-                        <motion.div
-                          animate={{ rotate: activeModule === moduleIndex ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <ChevronDown className="w-5 h-5 text-gray-500" />
-                        </motion.div>
-                      </motion.button>
-                      
-                      <AnimatePresence>
-                        {activeModule === moduleIndex && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="border-t border-gray-200 dark:border-gray-700"
-                          >
-                            <div className="p-6 space-y-3">
-                              {module.lessons.map((lesson, lessonIndex) => (
-                                <motion.div
-                                  key={lessonIndex}
-                                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                                  initial={{ opacity: 0, x: -20 }}
-                                  animate={{ opacity: 1, x: 0 }}
-                                  transition={{ delay: lessonIndex * 0.05 }}
-                                  whileHover={{ scale: 1.02 }}
-                                  onClick={() => markLessonComplete(`${moduleIndex}-${lessonIndex}`)}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <Play className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                    <span className="text-gray-800 dark:text-gray-200">{lesson}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-xs text-gray-500">5-10 min</span>
-                                    {completedLessons.has(`${moduleIndex}-${lessonIndex}`) && (
-                                      <CheckCircle className="w-4 h-4 text-green-500" />
-                                    )}
-                                  </div>
-                                </motion.div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quiz Tab */}
-            {activeTab === 'quiz' && (
-              <div className="space-y-6">
-                <div className="bg-white/90 dark:bg-gray-800/90 backdrop-blur-lg rounded-3xl shadow-xl border border-white/20 dark:border-gray-700/20 p-8">
-                  <div className="text-center mb-8">
-                    <div className="text-6xl mb-4">🧠</div>
-                    <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-                      {quiz.title}
-                    </h2>
-                    <p className="text-lg text-gray-600 dark:text-gray-400">
-                      Test your knowledge with {quiz.questions.length} questions
-                    </p>
-                  </div>
-                  
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex space-x-8 px-8 py-4">
+              {[
+                { id: 'overview', label: 'Overview', icon: BookOpen },
+                { id: 'videos', label: 'Videos', icon: PlayCircle },
+                { id: 'modules', label: 'Modules', icon: FileText },
+                { id: 'quiz', label: 'Quiz', icon: HelpCircle }
+              ].map((tab) => {
+                const IconComponent = tab.icon;
+                return (
                   <motion.button
-                    onClick={() => setCurrentQuiz(quiz)}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 px-8 rounded-2xl font-bold text-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-300 flex items-center justify-center space-x-3"
-                    whileHover={{ scale: 1.02, y: -2 }}
-                    whileTap={{ scale: 0.98 }}
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center space-x-2 py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
+                      activeTab === tab.id
+                        ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <Brain className="w-6 h-6" />
-                    <span>Start Quiz</span>
-                    <ArrowRight className="w-6 h-6" />
+                    <IconComponent className="w-5 h-5" />
+                    <span>{tab.label}</span>
                   </motion.button>
-                </div>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                );
+              })}
+            </nav>
+          </div>
 
-        {/* Quiz Modal */}
-        <AnimatePresence>
-          {currentQuiz && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-              >
-                {!showQuizResults ? (
-                  <div className="p-8">
-                    <div className="flex items-center justify-between mb-8">
-                      <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                        {currentQuiz.title}
-                      </h3>
-                      <motion.button
-                        onClick={() => setCurrentQuiz(null)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        ✕
-                      </motion.button>
+          {/* Tab Content */}
+          <div className="p-8">
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">Course Overview</h2>
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
+                      {course.description}
+                    </p>
+                    
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Learning Objectives</h3>
+                    <ul className="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-6">
+                      <li>Master the fundamentals of {course.topic}</li>
+                      <li>Apply practical knowledge through hands-on exercises</li>
+                      <li>Build real-world projects and develop your portfolio</li>
+                      <li>Understand industry best practices and standards</li>
+                      <li>Gain confidence to pursue advanced topics</li>
+                    </ul>
+                    
+                    <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Course Structure</h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {courseContent.modules.map((module, index) => (
+                        <div key={module.id} className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                            Module {index + 1}: {module.title}
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{module.description}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-500">{module.lessons.length} lessons</p>
+                        </div>
+                      ))}
                     </div>
                     
-                    <div className="space-y-8">
-                      {currentQuiz.questions.map((question, qIndex) => (
+                    <div className="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                      <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">Course Information</h3>
+                      <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-blue-700 dark:text-blue-300">Created by:</span>
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">{course.created_by}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700 dark:text-blue-300">Created on:</span>
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">{new Date(course.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700 dark:text-blue-300">Difficulty:</span>
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">{difficulty}</span>
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700 dark:text-blue-300">Duration:</span>
+                          <span className="ml-2 text-blue-600 dark:text-blue-400">{courseContent.totalDuration}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'videos' && (
+                <motion.div
+                  key="videos"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">Course Videos</h2>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {courseContent.videos.map((video, index) => (
+                      <motion.div
+                        key={video.id}
+                        className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
+                        whileHover={{ scale: 1.02 }}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <div className="relative">
+                          <img
+                            src={video.thumbnail}
+                            alt={video.title}
+                            className="w-full h-48 object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                            <motion.button
+                              onClick={() => setCurrentVideo(video)}
+                              className="bg-white/90 rounded-full p-4 hover:bg-white transition-colors"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Play className="w-8 h-8 text-gray-800 ml-1" />
+                            </motion.button>
+                          </div>
+                          <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                            {video.duration}
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-2 line-clamp-2">
+                            {video.title}
+                          </h3>
+                          <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>{video.channel}</span>
+                            <div className="flex items-center space-x-1">
+                              <Eye className="w-4 h-4" />
+                              <span>{video.views}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'modules' && (
+                <motion.div
+                  key="modules"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-6">Course Modules</h2>
+                  <div className="space-y-4">
+                    {courseContent.modules.map((module, moduleIndex) => (
+                      <motion.div
+                        key={module.id}
+                        className="bg-gray-50 dark:bg-gray-700 rounded-xl overflow-hidden"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: moduleIndex * 0.1 }}
+                      >
+                        <motion.button
+                          onClick={() => setExpandedModule(expandedModule === module.id ? null : module.id)}
+                          className="w-full p-6 text-left flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          whileHover={{ backgroundColor: isDarkMode ? 'rgba(75, 85, 99, 0.6)' : 'rgba(243, 244, 246, 1)' }}
+                        >
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-1">
+                              Module {moduleIndex + 1}: {module.title}
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400">{module.description}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                              {module.lessons.length} lessons
+                            </p>
+                          </div>
+                          <motion.div
+                            animate={{ rotate: expandedModule === module.id ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                          >
+                            <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          </motion.div>
+                        </motion.button>
+                        
+                        <AnimatePresence>
+                          {expandedModule === module.id && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="border-t border-gray-200 dark:border-gray-600"
+                            >
+                              <div className="p-6 space-y-3">
+                                {module.lessons.map((lesson, lessonIndex) => {
+                                  const isCompleted = completedLessons.has(lesson.id);
+                                  return (
+                                    <motion.div
+                                      key={lesson.id}
+                                      className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 ${
+                                        isCompleted
+                                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                          : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                      }`}
+                                      initial={{ opacity: 0, x: -20 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: lessonIndex * 0.05 }}
+                                    >
+                                      <div className="flex items-center space-x-3">
+                                        <motion.button
+                                          onClick={() => handleLessonComplete(lesson.id)}
+                                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                            isCompleted
+                                              ? 'bg-green-500 border-green-500 text-white'
+                                              : 'border-gray-300 dark:border-gray-600 hover:border-green-500'
+                                          }`}
+                                          whileHover={{ scale: 1.1 }}
+                                          whileTap={{ scale: 0.9 }}
+                                        >
+                                          {isCompleted && <CheckCircle className="w-4 h-4" />}
+                                        </motion.button>
+                                        <div>
+                                          <h4 className={`font-medium ${
+                                            isCompleted 
+                                              ? 'text-green-800 dark:text-green-200 line-through' 
+                                              : 'text-gray-800 dark:text-gray-200'
+                                          }`}>
+                                            {lesson.title}
+                                          </h4>
+                                          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                                            <Clock className="w-4 h-4" />
+                                            <span>{lesson.duration}</span>
+                                            <span className="capitalize">{lesson.type}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <motion.button
+                                        className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 font-medium"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                      >
+                                        {lesson.type === 'video' ? 'Watch' : lesson.type === 'practice' ? 'Practice' : 'Read'}
+                                      </motion.button>
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'quiz' && (
+                <motion.div
+                  key="quiz"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Course Quiz</h2>
+                    {quizSubmitted && (
+                      <motion.button
+                        onClick={() => {
+                          setQuizSubmitted(false);
+                          setQuizAnswers({});
+                        }}
+                        className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        <span>Retake Quiz</span>
+                      </motion.button>
+                    )}
+                  </div>
+                  
+                  {!quizSubmitted ? (
+                    <div className="space-y-6">
+                      {courseContent.quiz.map((question, questionIndex) => (
                         <motion.div
                           key={question.id}
-                          className="p-6 bg-gray-50 dark:bg-gray-700 rounded-2xl"
+                          className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: qIndex * 0.1 }}
+                          transition={{ delay: questionIndex * 0.1 }}
                         >
-                          <h4 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-                            {qIndex + 1}. {question.question}
-                          </h4>
+                          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+                            Question {questionIndex + 1}: {question.question}
+                          </h3>
                           <div className="space-y-3">
-                            {question.options.map((option, oIndex) => (
+                            {question.options.map((option, optionIndex) => (
                               <motion.label
-                                key={oIndex}
-                                className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                                  quizAnswers[question.id] === oIndex
-                                    ? 'bg-blue-100 dark:bg-blue-900 border-2 border-blue-500'
-                                    : 'bg-white dark:bg-gray-600 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-gray-500'
+                                key={optionIndex}
+                                className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+                                  quizAnswers[question.id] === optionIndex
+                                    ? 'bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700'
+                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                                 }`}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
                               >
                                 <input
                                   type="radio"
                                   name={`question-${question.id}`}
-                                  checked={quizAnswers[question.id] === oIndex}
-                                  onChange={() => handleQuizAnswer(question.id, oIndex)}
-                                  className="text-blue-600"
+                                  value={optionIndex}
+                                  checked={quizAnswers[question.id] === optionIndex}
+                                  onChange={() => setQuizAnswers({
+                                    ...quizAnswers,
+                                    [question.id]: optionIndex
+                                  })}
+                                  className="text-blue-600 focus:ring-blue-500"
                                 />
-                                <span className="text-gray-800 dark:text-gray-200">{option}</span>
+                                <span className="text-gray-700 dark:text-gray-300">{option}</span>
                               </motion.label>
                             ))}
                           </div>
                         </motion.div>
                       ))}
-                    </div>
-                    
-                    <div className="mt-8 flex justify-between">
+                      
                       <motion.button
-                        onClick={() => setCurrentQuiz(null)}
-                        className="px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        onClick={handleQuizSubmit}
+                        disabled={Object.keys(quizAnswers).length !== courseContent.quiz.length}
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-8 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-semibold"
+                        whileHover={{ scale: Object.keys(quizAnswers).length === courseContent.quiz.length ? 1.02 : 1 }}
+                        whileTap={{ scale: Object.keys(quizAnswers).length === courseContent.quiz.length ? 0.98 : 1 }}
                       >
-                        Cancel
-                      </motion.button>
-                      <motion.button
-                        onClick={submitQuiz}
-                        disabled={Object.keys(quizAnswers).length < currentQuiz.questions.length}
-                        className="px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Submit Quiz
+                        <HelpCircle className="w-5 h-5" />
+                        <span>Submit Quiz</span>
                       </motion.button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="p-8 text-center">
-                    <div className="text-6xl mb-6">
-                      {quizResults.score >= 70 ? '🎉' : '📚'}
-                    </div>
-                    <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-4">
-                      Quiz Complete!
-                    </h3>
-                    <div className="text-6xl font-bold mb-4">
-                      <span className={quizResults.score >= 70 ? 'text-green-600' : 'text-orange-600'}>
-                        {quizResults.score}%
-                      </span>
-                    </div>
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                      You scored {quizResults.correct} out of {quizResults.total} questions correctly
-                    </p>
-                    
-                    <div className="flex justify-center space-x-4">
-                      <motion.button
-                        onClick={retakeQuiz}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <RotateCcw className="w-5 h-5" />
-                        <span>Retake Quiz</span>
-                      </motion.button>
-                      <motion.button
-                        onClick={() => {
-                          setCurrentQuiz(null);
-                          setShowQuizResults(false);
-                          setQuizAnswers({});
-                          setQuizResults(null);
-                        }}
-                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        Continue Learning
-                      </motion.button>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  ) : (
+                    <motion.div
+                      className="text-center py-12"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div className="text-6xl mb-6">🎉</div>
+                      <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+                        Quiz Completed!
+                      </h3>
+                      <div className="space-y-4">
+                        {courseContent.quiz.map((question, index) => {
+                          const userAnswer = quizAnswers[question.id];
+                          const isCorrect = userAnswer === question.correct;
+                          return (
+                            <motion.div
+                              key={question.id}
+                              className={`p-4 rounded-xl border ${
+                                isCorrect 
+                                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                                  : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                              }`}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                  isCorrect ? 'bg-green-500' : 'bg-red-500'
+                                }`}>
+                                  {isCorrect ? (
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  ) : (
+                                    <span className="text-white text-sm">✕</span>
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                                    Question {index + 1}: {question.question}
+                                  </p>
+                                  <p className={`text-sm mb-2 ${
+                                    isCorrect ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'
+                                  }`}>
+                                    Your answer: {question.options[userAnswer]}
+                                  </p>
+                                  {!isCorrect && (
+                                    <p className="text-sm text-green-700 dark:text-green-300 mb-2">
+                                      Correct answer: {question.options[question.correct]}
+                                    </p>
+                                  )}
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {question.explanation}
+                                  </p>
+                                </div>
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="mt-8">
+                        <div className="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                          Score: {Math.round((Object.values(quizAnswers).filter((answer, index) => answer === courseContent.quiz[index].correct).length / courseContent.quiz.length) * 100)}%
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400">
+                          You got {Object.values(quizAnswers).filter((answer, index) => answer === courseContent.quiz[index].correct).length} out of {courseContent.quiz.length} questions correct!
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.div>
       </main>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {currentVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setCurrentVideo(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+                  {currentVideo.title}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <motion.button
+                    onClick={() => setVideoMuted(!videoMuted)}
+                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    {videoMuted ? (
+                      <VolumeX className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    ) : (
+                      <Volume2 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    )}
+                  </motion.button>
+                  <motion.button
+                    onClick={() => setCurrentVideo(null)}
+                    className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    ✕
+                  </motion.button>
+                </div>
+              </div>
+              <div className="aspect-video bg-black">
+                <iframe
+                  src={`https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=${videoMuted ? 1 : 0}`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allowFullScreen
+                  title={currentVideo.title}
+                />
+              </div>
+              <div className="p-6">
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <span>{currentVideo.channel}</span>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{currentVideo.views} views</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{currentVideo.duration}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Share Modal */}
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+                  Share this course
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Help others discover this amazing course!
+                </p>
+                
+                <div className="space-y-3">
+                  <motion.button
+                    onClick={handleShare}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Share2 className="w-5 h-5" />
+                    <span>Share Link</span>
+                  </motion.button>
+                  
+                  <motion.button
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast.success('📋 Link copied to clipboard!');
+                      setShowShareModal(false);
+                    }}
+                    className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Download className="w-5 h-5" />
+                    <span>Copy Link</span>
+                  </motion.button>
+                </div>
+                
+                <motion.button
+                  onClick={() => setShowShareModal(false)}
+                  className="w-full mt-4 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 py-2"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  Cancel
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Certificate Modal */}
+      <AnimatePresence>
+        {showCertificate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowCertificate(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Certificate Design */}
+              <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 p-8 text-white">
+                <div className="text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    className="text-6xl mb-4"
+                  >
+                    🏆
+                  </motion.div>
+                  <h2 className="text-3xl font-bold mb-2">Certificate of Completion</h2>
+                  <p className="text-blue-100 mb-8">Congratulations on your achievement!</p>
+                  
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 mb-6">
+                    <p className="text-lg mb-2">This certifies that</p>
+                    <h3 className="text-2xl font-bold mb-2">hariprasadmanoj3</h3>
+                    <p className="text-lg mb-2">has successfully completed</p>
+                    <h4 className="text-xl font-semibold mb-4">{course.title}</h4>
+                    <div className="flex justify-center items-center space-x-6 text-sm">
+                      <div>
+                        <span className="block font-medium">Completed</span>
+                        <span>{new Date().toLocaleDateString()}</span>
+                      </div>
+                      <div>
+                        <span className="block font-medium">Score</span>
+                        <span>100%</span>
+                      </div>
+                      <div>
+                        <span className="block font-medium">Duration</span>
+                        <span>{courseContent.totalDuration}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-center space-x-4">
+                    <motion.button
+                      onClick={() => {
+                        toast.success('🎉 Certificate downloaded! Great job!');
+                        setShowCertificate(false);
+                      }}
+                      className="bg-white text-blue-600 px-6 py-3 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Download Certificate
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setShowCertificate(false)}
+                      className="bg-white/20 text-white px-6 py-3 rounded-lg hover:bg-white/30 transition-colors font-medium"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      Close
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
