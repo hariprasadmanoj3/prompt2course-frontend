@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -443,4 +444,51 @@ const CoursesPage = () => {
   );
 };
 
+
+// Add these functions in CoursesPage.js
+const getCourseProgress = (courseId) => {
+  // Get saved progress from localStorage
+  const savedProgress = localStorage.getItem(`course_${courseId}_progress`);
+  if (savedProgress) {
+    return parseInt(savedProgress);
+  }
+  // Return random progress for demo
+  return Math.floor(Math.random() * 100);
+};
+
+const handleDeleteCourse = async (courseId) => {
+  try {
+    // Make API call to delete course
+    await apiRequest(`/api/courses/${courseId}/`, {
+      method: 'DELETE'
+    });
+    
+    // Remove from local state
+    setCourses(prev => prev.filter(course => course.id !== courseId));
+    toast.success('🗑️ Course deleted successfully!');
+    
+  } catch (error) {
+    console.error('Failed to delete course:', error);
+    toast.error('Failed to delete course. Please try again.');
+  }
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffHours = Math.floor((now - date) / (1000 * 60 * 60));
+  
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  } else if (diffHours < 168) {
+    const days = Math.floor(diffHours / 24);
+    return `${days}d ago`;
+  } else {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+  }
+};
 export default CoursesPage;
